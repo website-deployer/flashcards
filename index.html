@@ -150,8 +150,8 @@
         
         <!-- Header and Dark Mode Toggle -->
         <header class="text-center mb-6 relative">
-             <!-- Theme Toggle Button -->
-             <button id="theme-toggle" class="absolute top-0 right-0 p-2 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+            <!-- Theme Toggle Button -->
+            <button id="theme-toggle" class="absolute top-0 right-0 p-2 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition">
                 <!-- Sun Icon (Light Mode) -->
                 <svg id="sun-icon" class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="display:none;">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -193,6 +193,18 @@
                     &larr; Previous
                 </button>
                 <div class="flex gap-4 items-center">
+                    <!-- NEW SHUFFLE BUTTON -->
+                    <button id="shuffle-btn" onclick="shuffleDeckAndRender()" title="Shuffle Cards" class="p-2 bg-yellow-500 text-white rounded-lg shadow-sm hover:bg-yellow-600 transition duration-150 ease-in-out">
+                        <!-- Shuffle Icon (Lucide-React style, but as SVG) -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="16 3 21 3 21 8"/>
+                            <line x1="4" y1="20" x2="21" y2="3"/>
+                            <polyline points="21 16 21 21 16 21"/>
+                            <line x1="15" y1="15" x2="16" y2="16"/>
+                            <line x1="14" y1="12" x2="15" y2="13"/>
+                            <line x1="8" y1="8" x2="9" y2="9"/>
+                        </svg>
+                    </button>
                     <!-- Fullscreen Button -->
                     <button id="fullscreen-btn" onclick="toggleFullscreen()" title="Toggle Fullscreen" class="p-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg shadow-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition duration-150 ease-in-out">
                         <!-- Fullscreen Icon -->
@@ -280,6 +292,26 @@
                  [array[i], array[j]] = [array[j], array[i]];
              }
          }
+         
+        /**
+         * Shuffles the current deck, resets to the first card, and renders.
+         */
+        window.shuffleDeckAndRender = function() {
+            if (currentDeck.length <= 1) return; // No need to shuffle 0 or 1 card
+            
+            // 1. Shuffle the array
+            shuffle(currentDeck);
+            
+            // 2. Reset the index and flip state
+            currentCardIndex = 0;
+            
+            // 3. Render the first card in the new order
+            renderCard();
+            
+            // Provide feedback in the console, not visible to user but helpful for debugging
+            console.log("Deck successfully reshuffled.");
+        }
+
 
         // --- Dark Mode Logic ---
 
@@ -377,7 +409,7 @@
             
             // 1. Handle Title
             if (titleString) {
-                 result.title = decodeURIComponent(titleString).trim() || "Custom URL Flashcards";
+                result.title = decodeURIComponent(titleString).trim() || "Custom URL Flashcards";
             }
 
             // 2. Handle Cards
@@ -418,7 +450,7 @@
                     console.error("URL decoding error:", error);
                 }
             } else {
-                 result.error = "Missing 'cards' parameter in the URL.";
+                result.error = "Missing 'cards' parameter in the URL.";
             }
 
             return result;
@@ -449,7 +481,7 @@
                 document.title = defaultTitle; 
             }
 
-            // Always shuffle (even if the deck has 1 item) and reset index
+            // Always shuffle (even if the deck has 1 item) and reset index for a fresh start
             shuffle(currentDeck);
             currentCardIndex = 0;
             renderCard();
@@ -528,8 +560,8 @@
             const cardInput = document.getElementById('card-input').value.trim();
 
             const rawLines = cardInput.split('\n')
-                                   .map(line => line.trim())
-                                   .filter(line => line.includes(':')); // Filter out lines without ':'
+                                     .map(line => line.trim())
+                                     .filter(line => line.includes(':')); // Filter out lines without ':'
             
             const titleParam = encodeURIComponent(titleInput || "My Custom Deck");
 
@@ -560,9 +592,9 @@
             }).filter(c => c !== null);
 
             if (processedCards.length === 0) {
-                 linkOutputEl.value = "Error: Please ensure your cards have a Term and Definition separated by a colon.";
-                 linkOutputContainer.classList.remove('hidden');
-                 return;
+                linkOutputEl.value = "Error: Please ensure your cards have a Term and Definition separated by a colon.";
+                linkOutputContainer.classList.remove('hidden');
+                return;
             }
 
             // Join valid card strings using the deck separator (;)
@@ -623,6 +655,7 @@
                 
                 if (e.key === 'ArrowRight') nextCard();
                 else if (e.key === 'ArrowLeft') prevCard();
+                else if (e.key === 's' || e.key === 'S') shuffleDeckAndRender(); // Added keyboard shortcut for shuffle
                 else if (e.key === ' ' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                     e.preventDefault(); // Prevent spacebar from scrolling
                     flipCard();
