@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <!-- Use Inter font family -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Base styles for dark/light mode transition */
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* 3D Flip Animation */
+        .card-container {
+            perspective: 1000px;
+        }
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .card-container.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .card-back {
+            transform: rotateY(180deg);
+        }
+        
+        /* Responsive Text Scaling - Default/Mobile */
+        .card-content-front {
+            font-size: 2.25rem;
+            font-weight: 600;
+            transition: font-size 0.3s;
+        }
+        .card-content-back-def {
+             font-size: 1.5rem;
+             font-weight: 600;
+             transition: font-size 0.3s;
+        }
+        .card-content-back-ex {
+             font-size: 1.125rem;
+             transition: font-size 0.3s;
+        }
+
+        @media (max-width: 640px) {
+            .card-content-front {
+                font-size: 1.75rem;
+            }
+            .card-content-back-def {
+                font-size: 1.25rem;
+            }
+            .card-content-back-ex {
+                font-size: 1rem;
+            }
+        }
+
+        /* --- Fullscreen Styles --- */
+        /* Center the card within the fullscreen container and apply background */
+        #flashcard-container:fullscreen,
+        #flashcard-container:-webkit-full-screen,
+        #flashcard-container:-moz-full-screen,
+        #flashcard-container:-ms-full-screen {
+            background-color: var(--bg-color, #f3f4f6); /* Fallback */
+            --bg-color: theme('backgroundColor.gray.100');
+            
+            /* Apply dark mode background if <html> has dark class */
+            .dark & {
+                --bg-color: theme('backgroundColor.gray.900');
+            }
+            
+            /* Use the computed background color */
+            background-color: var(--bg-color);
+            position: fixed; /* Ensures it covers everything */
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 0;
+            cursor: pointer; /* Keep cursor pointer for flipping */
+            z-index: 9999;
+        }
+
+        /* Make the card take up a large portion of the viewport in fullscreen */
+        #flashcard-container:fullscreen #card-inner,
+        #flashcard-container:-webkit-full-screen #card-inner,
+        #flashcard-container:-moz-full-screen #card-inner,
+        #flashcard-container:-ms-full-screen #card-inner {
+            width: 80vw; 
+            height: 70vh; 
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 2rem;
+        }
+
+        /* Adjust text size for optimal viewing in fullscreen */
+        #flashcard-container:fullscreen .card-content-front,
+        #flashcard-container:-webkit-full-screen .card-content-front,
+        #flashcard-container:-moz-full-screen .card-content-front,
+        #flashcard-container:-ms-full-screen .card-content-front {
+            font-size: 4rem; 
+        }
+
+        #flashcard-container:fullscreen .card-content-back-def,
+        #flashcard-container:-webkit-full-screen .card-content-back-def,
+        #flashcard-container:-moz-full-screen .card-content-back-def,
+        #flashcard-container:-ms-full-screen .card-content-back-def {
+            font-size: 2.5rem; 
+        }
+        
+        #flashcard-container:fullscreen .card-content-back-ex,
+        #flashcard-container:-webkit-full-screen .card-content-back-ex,
+        #flashcard-container:-moz-full-screen .card-content-back-ex,
+        #flashcard-container:-ms-full-screen .card-content-back-ex {
+            font-size: 1.5rem; 
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-2xl mx-auto">
+        
+        <!-- Header and Dark Mode Toggle -->
+        <header class="text-center mb-6 relative">
+             <!-- Theme Toggle Button -->
+             <button id="theme-toggle" class="absolute top-0 right-0 p-2 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                <!-- Sun Icon (Light Mode) -->
+                <svg id="sun-icon" class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="display:none;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <!-- Moon Icon (Dark Mode) -->
+                <svg id="moon-icon" class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="display:block;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+            </button>
+            <h1 id="deck-title" class="text-3xl md:text-4xl font-bold text-gray-800 dark:text-gray-100">Flashcard Deck</h1>
+        </header>
+
+        <main>
+            <!-- Progress Bar -->
+            <div class="w-full h-2 mb-6 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden shadow-inner">
+                <div id="progress-bar" class="h-full bg-indigo-500 transition-all duration-300 ease-in-out" style="width: 0%;"></div>
+            </div>
+
+            <!-- Flashcard Container - Target for Fullscreen -->
+            <div id="flashcard-container" class="card-container w-full h-80 cursor-pointer mb-6" onclick="flipCard()">
+                <div id="card-inner" class="card-inner">
+                    <!-- Front of Card (Question / Root) -->
+                    <div id="card-front" class="card-front bg-white border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+                        <p class="card-content-front text-indigo-600 dark:text-indigo-400"></p>
+                    </div>
+                    <!-- Back of Card (Answer / Definition + Example) -->
+                    <div id="card-back" class="card-back bg-indigo-100 border border-indigo-200 dark:bg-indigo-900 dark:border-indigo-800">
+                        <div class="text-gray-800 dark:text-gray-100 p-4">
+                           <p id="back-definition" class="card-content-back-def text-gray-800 dark:text-gray-100 mb-2"></p>
+                           <p id="back-example" class="card-content-back-ex text-gray-600 dark:text-gray-300 italic"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex flex-col sm:flex-row items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700">
+                <button id="prev-btn" onclick="prevCard()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-lg shadow-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition duration-150 ease-in-out disabled:opacity-50 w-full sm:w-auto mb-3 sm:mb-0">
+                    &larr; Previous
+                </button>
+                <div class="flex gap-4 items-center">
+                    <!-- Fullscreen Button -->
+                    <button id="fullscreen-btn" onclick="toggleFullscreen()" title="Toggle Fullscreen" class="p-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg shadow-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition duration-150 ease-in-out">
+                        <!-- Fullscreen Icon -->
+                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-3v4m0 0h-4m4 0l-5-5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                        </svg>
+                    </button>
+                    <div id="card-counter" class="text-lg text-gray-600 dark:text-gray-300 font-medium">Card 0 / 0</div>
+                    <button id="flip-button" onclick="flipCard()" class="px-6 py-3 bg-indigo-500 text-white font-semibold rounded-lg shadow-lg hover:bg-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-150">
+                        Flip Card
+                    </button>
+                    <button id="next-btn" onclick="nextCard()" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-sm hover:bg-indigo-700 transition duration-150 ease-in-out disabled:opacity-50 w-full sm:w-auto mt-3 sm:mt-0">
+                        Next &rarr;
+                    </button>
+                </div>
+            </div>
+            
+            <hr class="w-full border-t border-gray-300 dark:border-gray-700 my-8">
+
+            <!-- URL Generator Section -->
+            <div class="w-full bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mt-6">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">Flashcard Link Generator</h2>
+                <p class="text-gray-600 dark:text-gray-300 mb-4 text-sm">
+                    Enter the **Deck Title** and your flashcards below, one per line, separated by a colon (<span class="font-bold">Term:Definition</span>).
+                </p>
+                
+                <input type="text" id="title-input" class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-700 placeholder-gray-400 mb-3" placeholder="Enter Deck Title (e.g., Biology Terms)">
+
+                <textarea id="card-input" rows="5" class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-700 placeholder-gray-400 mb-4 resize-none" placeholder="Example:&#10;Photosynthesis:Process plants use to make food&#10;Mitosis:Cell division resulting in two identical cells"></textarea>
+                
+                <button onclick="generateLink()" class="w-full py-3 bg-green-500 text-white font-bold rounded-lg shadow-md hover:bg-green-600 transition duration-150 ease-in-out">
+                    Generate Shareable Link
+                </button>
+
+                <div id="link-output-container" class="mt-4 hidden">
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Share this link:</p>
+                    <div class="flex items-center">
+                        <input type="text" id="link-output" readonly class="flex-grow p-3 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-gray-100 rounded-l-lg text-sm truncate">
+                        <button onclick="copyLink()" class="p-3 bg-gray-700 text-white rounded-r-lg hover:bg-gray-800 transition duration-150 ease-in-out flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M8 2a1 1 0 000 2h2a1 1 0 100-2H8z" />
+                                <path d="M3 5a2 2 0 012-2c1.248 0 2.213.792 2.85 1.775L9 5h1l.15-.225C10.787 3.792 11.752 3 13 3a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm10 2a1 1 0 100 2h-3a1 1 0 100 2h3a1 1 0 100 2h-3a1 1 0 100 2H5V7h8z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                    <p id="copy-message" class="text-xs text-green-600 mt-1 opacity-0 transition duration-300">Link copied!</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- DATA ---
+        // Default card data (Medical Terminology) for when no URL parameter is provided.
+        const defaultCards = [
+            { question: "cardi/o", definition: "heart", example: "Cardiologist (a doctor who specializes in the heart)" },
+            { question: "fasci/o", definition: "fascia (a band of fibrous connective tissue)", example: "Plantar fasciitis (inflammation of the plantar fascia)" },
+            { question: "fibr/o", definition: "fiber, fibrous tissue", example: "Fibromyalgia (a condition causing pain in muscles and fibrous tissues)" },
+            { question: "kinesi/o", definition: "movement", example: "Kinesiology (the study of body movement)" },
+            { question: "tax/o", definition: "coordination, order", example: "Ataxia (lack of voluntary coordination of muscle movements)" },
+            { question: "ton/o", definition: "tone, tension, stretching", example: "Dystonia (a condition of abnormal muscle tone)" },
+        ];
+
+        // --- Core Application State ---
+        let currentDeck = [];
+        let currentCardIndex = 0;
+        let isFlipped = false;
+        
+        // --- DOM Elements ---
+        const flashcardContainer = document.getElementById('flashcard-container');
+        const cardFrontText = document.querySelector('#card-front .card-content-front');
+        const cardBackDefEl = document.getElementById('back-definition');
+        const cardBackExEl = document.getElementById('back-example');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const cardCounterEl = document.getElementById('card-counter');
+        const deckTitleEl = document.getElementById('deck-title');
+        const progressBarEl = document.getElementById('progress-bar');
+        const linkOutputContainer = document.getElementById('link-output-container');
+        const linkOutputEl = document.getElementById('link-output');
+        const copyMessageEl = document.getElementById('copy-message');
+
+        // --- Utility Functions ---
+
+        /**
+         * Shuffles an array in place (Fisher-Yates algorithm).
+         */
+        function shuffle(array) {
+             for (let i = array.length - 1; i > 0; i--) {
+                 const j = Math.floor(Math.random() * (i + 1));
+                 [array[i], array[j]] = [array[j], array[i]];
+             }
+         }
+
+        // --- Dark Mode Logic ---
+
+        /**
+         * Applies or removes the 'dark' class on the HTML element.
+         * @param {boolean} enable - True to enable dark mode, false for light.
+         */
+        function applyTheme(enable) {
+            const htmlEl = document.documentElement;
+            const sunIcon = document.getElementById('sun-icon');
+            const moonIcon = document.getElementById('moon-icon');
+
+            if (enable) {
+                htmlEl.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                sunIcon.style.display = 'block';
+                moonIcon.style.display = 'none';
+            } else {
+                htmlEl.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block';
+            }
+        }
+
+        /**
+         * Toggles between light and dark mode.
+         */
+        window.toggleTheme = function() {
+            const isDarkMode = document.documentElement.classList.contains('dark');
+            applyTheme(!isDarkMode);
+        }
+        
+        // --- Fullscreen Logic (FIXED: Added robust promise rejection handling for permission errors) ---
+
+        /**
+         * Toggles fullscreen mode for the flashcard container.
+         */
+        window.toggleFullscreen = function() {
+            const container = document.getElementById('flashcard-container');
+            
+            try {
+                let promiseResult;
+                if (!document.fullscreenElement) {
+                    // Request fullscreen
+                    if (container.requestFullscreen) {
+                        promiseResult = container.requestFullscreen();
+                    } else if (container.webkitRequestFullscreen) { /* Safari */
+                        promiseResult = container.webkitRequestFullscreen();
+                    } else if (container.msRequestFullscreen) { /* IE11 */
+                        promiseResult = container.msRequestFullscreen();
+                    }
+                } else {
+                    // Exit fullscreen
+                    if (document.exitFullscreen) {
+                        promiseResult = document.exitFullscreen();
+                    } else if (document.webkitExitFullscreen) { /* Safari */
+                        promiseResult = document.webkitExitFullscreen();
+                    } else if (document.msExitFullscreen) { /* IE11 */
+                        promiseResult = document.msExitFullscreen();
+                    }
+                }
+
+                // If a Promise was returned (modern API), explicitly catch the rejection.
+                // This prevents the "UNHANDLEDREJECTION" error when permissions policy blocks the request.
+                if (promiseResult && typeof promiseResult.catch === 'function') {
+                    promiseResult.catch(e => {
+                        console.warn("Fullscreen operation failed due to browser/permission policy:", e.message);
+                    });
+                }
+            } catch (e) {
+                // Catch synchronous errors (e.g., if a prefixed method throws immediately)
+                console.warn("Fullscreen failed (sync error): This is often due to security restrictions in the embedded environment (iframe). The error was:", e.message);
+            }
+        }
+
+
+        // --- Deck Initialization and URL Parsing ---
+
+        /**
+         * Parses the URL parameters to extract the 'cards' deck and title.
+         * Handles error cases for missing/malformed parameters.
+         */
+        function parseUrlDeck() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const cardString = urlParams.get('cards');
+            const titleString = urlParams.get('title');
+
+            if (!cardString && !titleString) return null; // No custom parameters found
+
+            const result = {
+                title: 'Custom URL Flashcards',
+                cards: [],
+                error: null
+            };
+            
+            // 1. Handle Title
+            if (titleString) {
+                 result.title = decodeURIComponent(titleString).trim() || "Custom URL Flashcards";
+            }
+
+            // 2. Handle Cards
+            if (cardString) {
+                try {
+                    const decodedString = decodeURIComponent(cardString);
+                    
+                    const parsedCards = decodedString.split(';').map(cardEntry => {
+                        const parts = cardEntry.split(':');
+                        
+                        if (parts.length >= 2) {
+                            const question = parts[0].trim();
+                            const answer = parts.slice(1).join(':').trim(); 
+                            return { question, definition: answer, example: "(Answer for the question above)" };
+                        }
+                        return null; 
+                    }).filter(card => card !== null && card.question && card.definition);
+                    
+                    if (parsedCards.length > 0) {
+                        result.cards = parsedCards;
+                    } else {
+                        result.error = "Malformed or empty 'Term:Definition' pairs in the URL.";
+                    }
+
+                } catch (error) {
+                    result.error = "Error decoding 'cards' parameter due to bad encoding.";
+                    console.error("URL decoding error:", error);
+                }
+            } else {
+                 result.error = "Missing 'cards' parameter in the URL.";
+            }
+
+            return result;
+        }
+
+        /**
+         * Loads the deck from URL or falls back to default cards and handles errors.
+         */
+        function initializeDeck() {
+            const urlResult = parseUrlDeck();
+
+            if (urlResult && urlResult.cards.length > 0) {
+                // Successful URL Load
+                currentDeck = urlResult.cards;
+                deckTitleEl.textContent = urlResult.title;
+                document.title = urlResult.title; // Update browser tab title
+            } else if (urlResult && urlResult.error) {
+                // URL Error Case (empty, malformed, or missing cards)
+                currentDeck = [{ question: "Error Loading Deck", definition: urlResult.error, example: "Use the Generator below to create a valid link." }];
+                deckTitleEl.textContent = urlResult.title;
+                document.title = urlResult.title; // Update browser tab title
+            } else {
+                // Default Deck Case (No valid URL parameters)
+                const defaultTitle = "Medical Terminology Flashcards";
+                currentDeck = defaultCards.map(c => ({
+                    question: c.question, 
+                    definition: c.definition,
+                    example: c.example
+                }));
+                deckTitleEl.textContent = defaultTitle;
+                document.title = defaultTitle; // Update browser tab title
+            }
+
+            // Always shuffle and reset index
+            shuffle(currentDeck);
+            currentCardIndex = 0;
+            renderCard();
+        }
+
+        // --- Flashcard UI Logic ---
+
+        /**
+         * Renders the current card's content and updates navigation state and progress.
+         */
+        function renderCard() {
+            if (currentDeck.length === 0) return;
+
+            const card = currentDeck[currentCardIndex];
+            
+            // Update Content
+            cardFrontText.textContent = card.question;
+            cardBackDefEl.textContent = card.definition;
+            cardBackExEl.textContent = card.example;
+
+            // Update Status
+            cardCounterEl.textContent = `Card ${currentCardIndex + 1} / ${currentDeck.length}`;
+            
+            // Update Progress Bar
+            const progress = (currentCardIndex + 1) / currentDeck.length * 100;
+            progressBarEl.style.width = `${progress.toFixed(2)}%`;
+
+            // Update Navigation Button States
+            prevBtn.disabled = currentCardIndex === 0;
+            nextBtn.disabled = currentCardIndex === currentDeck.length - 1;
+            
+            // Reset Flip State
+            if (isFlipped) {
+                flashcardContainer.classList.remove('flipped');
+                isFlipped = false;
+            }
+        }
+
+        /**
+         * Toggles the flip state of the card.
+         */
+        window.flipCard = function() {
+            if (currentDeck.length === 0) return;
+            isFlipped = !isFlipped;
+            flashcardContainer.classList.toggle('flipped');
+        }
+
+        /**
+         * Moves to the next card in the deck.
+         */
+        window.nextCard = function() {
+            if (currentCardIndex < currentDeck.length - 1) {
+                currentCardIndex++;
+                renderCard();
+            }
+        }
+        
+        /**
+         * Moves to the previous card in the deck.
+         */
+        window.prevCard = function() {
+            if (currentCardIndex > 0) {
+                currentCardIndex--;
+                renderCard();
+            }
+        }
+
+        // --- URL Generator Functions ---
+
+        /**
+         * Generates the shareable URL based on the text inputs.
+         */
+        window.generateLink = function() {
+            const titleInput = document.getElementById('title-input').value.trim();
+            const cardInput = document.getElementById('card-input').value.trim();
+
+            const lines = cardInput.split('\n')
+                                   .map(line => line.trim())
+                                   .filter(line => line.includes(':'));
+            
+            const titleParam = encodeURIComponent(titleInput || "My Custom Deck");
+
+            if (lines.length === 0) {
+                linkOutputEl.value = "Error: Please enter valid Term:Definition pairs.";
+                linkOutputContainer.classList.remove('hidden');
+                return;
+            }
+
+            // Join valid card strings using the deck separator (;)
+            const cardParamValue = encodeURIComponent(lines.join(';'));
+            
+            // Construct the full URL
+            const newUrl = `${window.location.protocol}//${window.location.host}${window.location.pathname}?title=${titleParam}&cards=${cardParamValue}`;
+
+            linkOutputEl.value = newUrl;
+            linkOutputContainer.classList.remove('hidden');
+
+            // Optionally reload the new deck into the app preview for testing
+            initializeDeck();
+        }
+
+        /**
+         * Copies the generated link to the clipboard.
+         */
+        window.copyLink = function() {
+            linkOutputEl.select();
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    copyMessageEl.classList.remove('opacity-0');
+                    setTimeout(() => copyMessageEl.classList.add('opacity-0'), 2000);
+                }
+            } catch (err) {
+                console.error('Copy failed:', err);
+                linkOutputEl.setSelectionRange(0, 99999); 
+            }
+        }
+
+        // --- Initialization on Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Initialize Theme
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const storedTheme = localStorage.getItem('theme');
+            
+            if (storedTheme === 'dark' || (!storedTheme && prefersDark)) {
+                applyTheme(true);
+            } else {
+                applyTheme(false);
+            }
+
+            // 2. Initialize Deck
+            initializeDeck();
+
+            // 3. Attach event listener for theme toggle
+            document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+            
+            // 4. Keyboard shortcuts for quick studying
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight') nextCard();
+                else if (e.key === 'ArrowLeft') prevCard();
+                else if (e.key === ' ' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                    e.preventDefault(); // Prevent spacebar from scrolling
+                    flipCard();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
