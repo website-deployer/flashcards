@@ -216,12 +216,13 @@
             <div class="w-full bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mt-6">
                 <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">Flashcard Link Generator</h2>
                 <p class="text-gray-600 dark:text-gray-300 mb-4 text-sm">
-                    Enter the **Deck Title** and your flashcards below, one per line, separated by a colon (<span class="font-bold">Term:Definition</span>).
+                    Enter the <b>Deck Title</b> and your flashcards below, one per line. Use a <b>Colon</b> (:) for the term/definition, and an optional <b>Pipe</b> (|) to add example text.<br>
+                    <span class="font-bold text-indigo-500">Format: Term:Definition | Example Text</span>
                 </p>
                 
                 <input type="text" id="title-input" class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-700 placeholder-gray-400 mb-3" placeholder="Enter Deck Title (e.g., Biology Terms)">
 
-                <textarea id="card-input" rows="5" class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-700 placeholder-gray-400 mb-4 resize-none" placeholder="Example:&#10;Photosynthesis:Process plants use to make food&#10;Mitosis:Cell division resulting in two identical cells"></textarea>
+                <textarea id="card-input" rows="5" class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-700 placeholder-gray-400 mb-4 resize-none" placeholder="Example:&#10;Photosynthesis:Process plants use to make food | This process uses sunlight and water.&#10;Mitosis:Cell division resulting in two identical cells | Used by the body for growth and repair."></textarea>
                 
                 <button onclick="generateLink()" class="w-full py-3 bg-green-500 text-white font-bold rounded-lg shadow-md hover:bg-green-600 transition duration-150 ease-in-out">
                     Generate Shareable Link
@@ -246,15 +247,8 @@
 
     <script>
         // --- DATA ---
-        // Default card data (Medical Terminology) for when no URL parameter is provided.
-        const defaultCards = [
-            { question: "cardi/o", definition: "heart", example: "Cardiologist (a doctor who specializes in the heart)" },
-            { question: "fasci/o", definition: "fascia (a band of fibrous connective tissue)", example: "Plantar fasciitis (inflammation of the plantar fascia)" },
-            { question: "fibr/o", definition: "fiber, fibrous tissue", example: "Fibromyalgia (a condition causing pain in muscles and fibrous tissues)" },
-            { question: "kinesi/o", definition: "movement", example: "Kinesiology (the study of body movement)" },
-            { question: "tax/o", definition: "coordination, order", example: "Ataxia (lack of voluntary coordination of muscle movements)" },
-            { question: "ton/o", definition: "tone, tension, stretching", example: "Dystonia (a condition of abnormal muscle tone)" },
-        ];
+        // Removed default data as requested.
+        const defaultCards = [];
 
         // --- Core Application State ---
         let currentDeck = [];
@@ -319,7 +313,7 @@
             applyTheme(!isDarkMode);
         }
         
-        // --- Fullscreen Logic (FIXED: Added robust promise rejection handling for permission errors) ---
+        // --- Fullscreen Logic (Includes promise rejection handling for permission errors) ---
 
         /**
          * Toggles fullscreen mode for the flashcard container.
@@ -350,14 +344,13 @@
                 }
 
                 // If a Promise was returned (modern API), explicitly catch the rejection.
-                // This prevents the "UNHANDLEDREJECTION" error when permissions policy blocks the request.
                 if (promiseResult && typeof promiseResult.catch === 'function') {
                     promiseResult.catch(e => {
                         console.warn("Fullscreen operation failed due to browser/permission policy:", e.message);
                     });
                 }
             } catch (e) {
-                // Catch synchronous errors (e.g., if a prefixed method throws immediately)
+                // Catch synchronous errors 
                 console.warn("Fullscreen failed (sync error): This is often due to security restrictions in the embedded environment (iframe). The error was:", e.message);
             }
         }
@@ -367,7 +360,7 @@
 
         /**
          * Parses the URL parameters to extract the 'cards' deck and title.
-         * Handles error cases for missing/malformed parameters.
+         * Handles error cases for missing/malformed parameters, now supporting '|' for example text.
          */
         function parseUrlDeck() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -393,12 +386,23 @@
                     const decodedString = decodeURIComponent(cardString);
                     
                     const parsedCards = decodedString.split(';').map(cardEntry => {
-                        const parts = cardEntry.split(':');
+                        // 1. Separate the main part (Question:Definition) from the Example part by the first occurrence of "|"
+                        let [mainPart, examplePart = ""] = cardEntry.split('|').map(s => s.trim());
+                        
+                        // 2. Separate Question from Definition by the first occurrence of ":"
+                        const parts = mainPart.split(':');
                         
                         if (parts.length >= 2) {
                             const question = parts[0].trim();
-                            const answer = parts.slice(1).join(':').trim(); 
-                            return { question, definition: answer, example: "(Answer for the question above)" };
+                            // Join remaining parts in case the definition has colons
+                            const definition = parts.slice(1).join(':').trim(); 
+                            
+                            // Ensure example is populated
+                            const example = examplePart || "(Example text not provided)";
+
+                            if (question && definition) {
+                                return { question, definition, example };
+                            }
                         }
                         return null; 
                     }).filter(card => card !== null && card.question && card.definition);
@@ -437,18 +441,15 @@
                 deckTitleEl.textContent = urlResult.title;
                 document.title = urlResult.title; // Update browser tab title
             } else {
-                // Default Deck Case (No valid URL parameters)
-                const defaultTitle = "Medical Terminology Flashcards";
-                currentDeck = defaultCards.map(c => ({
-                    question: c.question, 
-                    definition: c.definition,
-                    example: c.example
-                }));
+                // Default Deck Case (No valid URL parameters AND no default cards)
+                const defaultTitle = "Create Your First Deck";
+                // Display placeholder card instead of default data
+                currentDeck = [{ question: "Welcome to your Flashcards!", definition: "Use the Generator below to create a shareable deck.", example: "Or load a deck using a URL parameter." }];
                 deckTitleEl.textContent = defaultTitle;
-                document.title = defaultTitle; // Update browser tab title
+                document.title = defaultTitle; 
             }
 
-            // Always shuffle and reset index
+            // Always shuffle (even if the deck has 1 item) and reset index
             shuffle(currentDeck);
             currentCardIndex = 0;
             renderCard();
@@ -467,7 +468,8 @@
             // Update Content
             cardFrontText.textContent = card.question;
             cardBackDefEl.textContent = card.definition;
-            cardBackExEl.textContent = card.example;
+            // Set example text, showing a placeholder if empty
+            cardBackExEl.textContent = card.example || "(No example text provided)";
 
             // Update Status
             cardCounterEl.textContent = `Card ${currentCardIndex + 1} / ${currentDeck.length}`;
@@ -525,20 +527,46 @@
             const titleInput = document.getElementById('title-input').value.trim();
             const cardInput = document.getElementById('card-input').value.trim();
 
-            const lines = cardInput.split('\n')
+            const rawLines = cardInput.split('\n')
                                    .map(line => line.trim())
-                                   .filter(line => line.includes(':'));
+                                   .filter(line => line.includes(':')); // Filter out lines without ':'
             
             const titleParam = encodeURIComponent(titleInput || "My Custom Deck");
 
-            if (lines.length === 0) {
+            if (rawLines.length === 0) {
                 linkOutputEl.value = "Error: Please enter valid Term:Definition pairs.";
                 linkOutputContainer.classList.remove('hidden');
                 return;
             }
 
+            // Map each raw line into the card data string (Question:Definition|Example) for the URL parameter
+            const processedCards = rawLines.map(line => {
+                // 1. Separate the main part (Question:Definition) from the Example part by the first occurrence of "|"
+                let [mainPart, examplePart = ""] = line.split('|').map(s => s.trim());
+                
+                // 2. Separate Question from Definition by the first occurrence of ":"
+                const parts = mainPart.split(':');
+                
+                if (parts.length >= 2) {
+                    const question = parts[0].trim();
+                    const definition = parts.slice(1).join(':').trim(); // Definition can contain colons
+
+                    if (question && definition) {
+                        // The format for the URL value is Question:Definition|Example
+                        return `${question}:${definition}${examplePart ? '|' + examplePart : ''}`;
+                    }
+                }
+                return null;
+            }).filter(c => c !== null);
+
+            if (processedCards.length === 0) {
+                 linkOutputEl.value = "Error: Please ensure your cards have a Term and Definition separated by a colon.";
+                 linkOutputContainer.classList.remove('hidden');
+                 return;
+            }
+
             // Join valid card strings using the deck separator (;)
-            const cardParamValue = encodeURIComponent(lines.join(';'));
+            const cardParamValue = encodeURIComponent(processedCards.join(';'));
             
             // Construct the full URL
             const newUrl = `${window.location.protocol}//${window.location.host}${window.location.pathname}?title=${titleParam}&cards=${cardParamValue}`;
@@ -556,6 +584,7 @@
         window.copyLink = function() {
             linkOutputEl.select();
             try {
+                // document.execCommand('copy') is used as navigator.clipboard might be restricted in iframes
                 const successful = document.execCommand('copy');
                 if (successful) {
                     copyMessageEl.classList.remove('opacity-0');
@@ -587,6 +616,11 @@
             
             // 4. Keyboard shortcuts for quick studying
             document.addEventListener('keydown', (e) => {
+                // Ensure keypresses only affect card if input fields aren't focused
+                if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
+                    return;
+                }
+                
                 if (e.key === 'ArrowRight') nextCard();
                 else if (e.key === 'ArrowLeft') prevCard();
                 else if (e.key === ' ' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
