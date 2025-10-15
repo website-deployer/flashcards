@@ -229,7 +229,8 @@
                 <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">Flashcard Link Generator</h2>
                 <p class="text-gray-600 dark:text-gray-300 mb-4 text-sm">
                     Enter the <b>Deck Title</b> and your flashcards below, one per line. Use a <b>Colon</b> (:) for the term/definition, and an optional <b>Pipe</b> (|) to add example text.<br>
-                    <span class="font-bold text-indigo-500">Format: Term:Definition | Example Text</span>
+                    <span class="font-bold text-indigo-500">Format: Term:Definition | Example Text</span><br>
+                    <span class="text-green-600 dark:text-green-400 font-medium">✓ Now supports unlimited flashcards with short, shareable URLs!</span>
                 </p>
                 
                 <input type="text" id="title-input" class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-700 placeholder-gray-400 mb-3" placeholder="Enter Deck Title (e.g., Biology Terms)">
@@ -239,6 +240,19 @@
                 <button onclick="generateLink()" class="w-full py-3 bg-green-500 text-white font-bold rounded-lg shadow-md hover:bg-green-600 transition duration-150 ease-in-out">
                     Generate Shareable Link
                 </button>
+
+                <!-- Data Management Buttons -->
+                <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <button onclick="exportDeck()" class="py-2 px-4 bg-blue-500 text-white font-semibold rounded-lg shadow-sm hover:bg-blue-600 transition duration-150 ease-in-out">
+                        📥 Export Deck
+                    </button>
+                    <button onclick="importDeck()" class="py-2 px-4 bg-purple-500 text-white font-semibold rounded-lg shadow-sm hover:bg-purple-600 transition duration-150 ease-in-out">
+                        📤 Import Deck
+                    </button>
+                    <button onclick="clearAllStoredDecks()" class="py-2 px-4 bg-red-500 text-white font-semibold rounded-lg shadow-sm hover:bg-red-600 transition duration-150 ease-in-out">
+                        🗑️ Clear All
+                    </button>
+                </div>
 
                 <div id="link-output-container" class="mt-4 hidden">
                     <p class="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Share this link:</p>
@@ -388,18 +402,81 @@
         }
 
 
-        // --- Deck Initialization and URL Parsing ---
+        // --- Deck Initialization and Data Storage ---
 
         /**
-         * Parses the URL parameters to extract the 'cards' deck and title.
-         * Handles error cases for missing/malformed parameters, now supporting '|' for example text.
+         * Generates a unique key for storing flashcard data in localStorage
+         */
+        function generateDeckKey() {
+            return 'flashcard_deck_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        /**
+         * Saves flashcard data to localStorage and returns a unique key
+         */
+        function saveDeckToStorage(title, cards) {
+            const deckKey = generateDeckKey();
+            const deckData = {
+                title: title,
+                cards: cards,
+                timestamp: Date.now()
+            };
+            
+            try {
+                localStorage.setItem(deckKey, JSON.stringify(deckData));
+                return deckKey;
+            } catch (error) {
+                console.error('Failed to save deck to localStorage:', error);
+                return null;
+            }
+        }
+
+        /**
+         * Loads flashcard data from localStorage using a key
+         */
+        function loadDeckFromStorage(deckKey) {
+            try {
+                const storedData = localStorage.getItem(deckKey);
+                if (storedData) {
+                    return JSON.parse(storedData);
+                }
+                return null;
+            } catch (error) {
+                console.error('Failed to load deck from localStorage:', error);
+                return null;
+            }
+        }
+
+        /**
+         * Parses URL parameters to get deck key or legacy card data
+         * Handles both new localStorage-based system and legacy URL-based system
          */
         function parseUrlDeck() {
             const urlParams = new URLSearchParams(window.location.search);
+            const deckKey = urlParams.get('deck');
             const cardString = urlParams.get('cards');
             const titleString = urlParams.get('title');
 
-            if (!cardString && !titleString) return null; // No custom parameters found
+            // New localStorage-based system
+            if (deckKey) {
+                const deckData = loadDeckFromStorage(deckKey);
+                if (deckData) {
+                    return {
+                        title: deckData.title,
+                        cards: deckData.cards,
+                        error: null
+                    };
+                } else {
+                    return {
+                        title: 'Deck Not Found',
+                        cards: [],
+                        error: 'The requested deck could not be found. It may have been deleted or the link is invalid.'
+                    };
+                }
+            }
+
+            // Legacy URL-based system (for backward compatibility)
+            if (!cardString && !titleString) return null;
 
             const result = {
                 title: 'Custom URL Flashcards',
@@ -407,29 +484,23 @@
                 error: null
             };
             
-            // 1. Handle Title
+            // Handle Title
             if (titleString) {
                 result.title = decodeURIComponent(titleString).trim() || "Custom URL Flashcards";
             }
 
-            // 2. Handle Cards
+            // Handle Cards
             if (cardString) {
                 try {
                     const decodedString = decodeURIComponent(cardString);
                     
                     const parsedCards = decodedString.split(';').map(cardEntry => {
-                        // 1. Separate the main part (Question:Definition) from the Example part by the first occurrence of "|"
                         let [mainPart, examplePart = ""] = cardEntry.split('|').map(s => s.trim());
-                        
-                        // 2. Separate Question from Definition by the first occurrence of ":"
                         const parts = mainPart.split(':');
                         
                         if (parts.length >= 2) {
                             const question = parts[0].trim();
-                            // Join remaining parts in case the definition has colons
                             const definition = parts.slice(1).join(':').trim(); 
-                            
-                            // Ensure example is populated
                             const example = examplePart || "(Example text not provided)";
 
                             if (question && definition) {
@@ -554,6 +625,7 @@
 
         /**
          * Generates the shareable URL based on the text inputs.
+         * Uses localStorage for data storage and creates a short URL with just the deck key.
          */
         window.generateLink = function() {
             const titleInput = document.getElementById('title-input').value.trim();
@@ -563,29 +635,24 @@
                                      .map(line => line.trim())
                                      .filter(line => line.includes(':')); // Filter out lines without ':'
             
-            const titleParam = encodeURIComponent(titleInput || "My Custom Deck");
-
             if (rawLines.length === 0) {
                 linkOutputEl.value = "Error: Please enter valid Term:Definition pairs.";
                 linkOutputContainer.classList.remove('hidden');
                 return;
             }
 
-            // Map each raw line into the card data string (Question:Definition|Example) for the URL parameter
+            // Parse cards from input
             const processedCards = rawLines.map(line => {
-                // 1. Separate the main part (Question:Definition) from the Example part by the first occurrence of "|"
                 let [mainPart, examplePart = ""] = line.split('|').map(s => s.trim());
-                
-                // 2. Separate Question from Definition by the first occurrence of ":"
                 const parts = mainPart.split(':');
                 
                 if (parts.length >= 2) {
                     const question = parts[0].trim();
-                    const definition = parts.slice(1).join(':').trim(); // Definition can contain colons
+                    const definition = parts.slice(1).join(':').trim();
+                    const example = examplePart || "(Example text not provided)";
 
                     if (question && definition) {
-                        // The format for the URL value is Question:Definition|Example
-                        return `${question}:${definition}${examplePart ? '|' + examplePart : ''}`;
+                        return { question, definition, example };
                     }
                 }
                 return null;
@@ -597,11 +664,17 @@
                 return;
             }
 
-            // Join valid card strings using the deck separator (;)
-            const cardParamValue = encodeURIComponent(processedCards.join(';'));
+            // Save to localStorage and get the deck key
+            const deckKey = saveDeckToStorage(titleInput || "My Custom Deck", processedCards);
             
-            // Construct the full URL
-            const newUrl = `${window.location.protocol}//${window.location.host}${window.location.pathname}?title=${titleParam}&cards=${cardParamValue}`;
+            if (!deckKey) {
+                linkOutputEl.value = "Error: Failed to save deck. Please check your browser's localStorage settings.";
+                linkOutputContainer.classList.remove('hidden');
+                return;
+            }
+
+            // Construct the short URL with just the deck key
+            const newUrl = `${window.location.protocol}//${window.location.host}${window.location.pathname}?deck=${deckKey}`;
 
             linkOutputEl.value = newUrl;
             linkOutputContainer.classList.remove('hidden');
@@ -625,6 +698,92 @@
             } catch (err) {
                 console.error('Copy failed:', err);
                 linkOutputEl.setSelectionRange(0, 99999); 
+            }
+        }
+
+        /**
+         * Exports the current deck data as JSON for backup purposes
+         */
+        window.exportDeck = function() {
+            if (currentDeck.length === 0) {
+                alert('No deck to export!');
+                return;
+            }
+
+            const deckData = {
+                title: deckTitleEl.textContent,
+                cards: currentDeck,
+                timestamp: Date.now(),
+                version: '2.0'
+            };
+
+            const dataStr = JSON.stringify(deckData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `flashcards_${deckData.title.replace(/[^a-zA-Z0-9]/g, '_')}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        /**
+         * Imports deck data from a JSON file
+         */
+        window.importDeck = function() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const deckData = JSON.parse(e.target.result);
+                        
+                        if (!deckData.title || !deckData.cards || !Array.isArray(deckData.cards)) {
+                            alert('Invalid deck file format!');
+                            return;
+                        }
+                        
+                        currentDeck = deckData.cards;
+                        deckTitleEl.textContent = deckData.title;
+                        document.title = deckData.title;
+                        
+                        currentCardIndex = 0;
+                        shuffle(currentDeck);
+                        renderCard();
+                        
+                        alert(`Successfully imported "${deckData.title}" with ${deckData.cards.length} cards!`);
+                    } catch (error) {
+                        alert('Error reading deck file: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            
+            input.click();
+        }
+
+        /**
+         * Clears all stored flashcard decks from localStorage
+         */
+        window.clearAllStoredDecks = function() {
+            if (confirm('This will delete all stored flashcard decks from your browser. This action cannot be undone. Continue?')) {
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith('flashcard_deck_')) {
+                        keysToRemove.push(key);
+                    }
+                }
+                
+                keysToRemove.forEach(key => localStorage.removeItem(key));
+                alert(`Cleared ${keysToRemove.length} stored decks.`);
             }
         }
 
