@@ -403,40 +403,34 @@
         // --- Deck Initialization and Data Compression ---
 
         /**
-         * Compresses flashcard data using a custom compression algorithm
-         * Uses URL-safe characters and reduces redundancy
+         * Compresses flashcard data using a simple and reliable algorithm
+         * Uses compact JSON structure and Base64 encoding
          */
         function compressDeckData(title, cards) {
             try {
-                // Create a compact data structure
+                console.log('Compressing data:', { title, cards });
+                
+                // Create a compact data structure with short property names
                 const deckData = {
                     t: title, // title
-                    c: cards.map(card => ({
-                        q: card.question,    // question
-                        d: card.definition,  // definition  
-                        e: card.example      // example
-                    }))
+                    c: cards.map(card => [
+                        card.question,    // question
+                        card.definition,  // definition  
+                        card.example      // example
+                    ])
                 };
+                
+                console.log('Deck data structure:', deckData);
                 
                 // Convert to JSON string
                 const jsonString = JSON.stringify(deckData);
-                
-                // Simple compression: replace common patterns
-                let compressed = jsonString
-                    .replace(/"question"/g, '"q"')
-                    .replace(/"definition"/g, '"d"')
-                    .replace(/"example"/g, '"e"')
-                    .replace(/"title"/g, '"t"')
-                    .replace(/"/g, '"')  // Use single quotes instead of double quotes
-                    .replace(/'/g, "'")  // Escape single quotes
-                    .replace(/"/g, "'")  // Replace escaped quotes with single quotes
-                    .replace(/:/g, ':')  // Replace colons with shorter symbol
-                    .replace(/,/g, ',')  // Replace commas with shorter symbol
-                    .replace(/\{/g, '{')  // Replace braces with shorter symbols
-                    .replace(/\}/g, '}');
+                console.log('JSON string:', jsonString);
                 
                 // Base64 encode for URL safety
-                return btoa(compressed);
+                const compressed = btoa(jsonString);
+                console.log('Compressed result:', compressed);
+                
+                return compressed;
             } catch (error) {
                 console.error('Compression failed:', error);
                 return null;
@@ -449,110 +443,15 @@
         function decompressDeckData(compressedData) {
             try {
                 // Base64 decode
-                const decompressed = atob(compressedData);
-                
-                // Restore original JSON format
-                let jsonString = decompressed
-                    .replace(/'/g, '"')  // Restore double quotes
-                    .replace(/'/g, "'")  // Restore single quotes
-                    .replace(/:/g, ':')  // Restore colons
-                    .replace(/,/g, ',')  // Restore commas
-                    .replace(/\{/g, '{')  // Restore braces
-                    .replace(/\}/g, '}');
+                const jsonString = atob(compressedData);
+                console.log('Decompressed JSON string:', jsonString);
                 
                 // Parse JSON
                 const deckData = JSON.parse(jsonString);
+                console.log('Parsed deck data:', deckData);
                 
                 // Convert back to full format
-                return {
-                    title: deckData.t,
-                    cards: deckData.c.map(card => ({
-                        question: card.q,
-                        definition: card.d,
-                        example: card.e
-                    }))
-                };
-            } catch (error) {
-                console.error('Decompression failed:', error);
-                return null;
-            }
-        }
-
-        /**
-         * Alternative compression using LZ-string-like algorithm for better compression
-         */
-        function compressDeckDataAdvanced(title, cards) {
-            try {
-                // Create compact data structure
-                const deckData = {
-                    t: title,
-                    c: cards.map(card => [card.question, card.definition, card.example])
-                };
-                
-                const jsonString = JSON.stringify(deckData);
-                
-                // Use a simple dictionary compression
-                const dict = {};
-                let dictIndex = 0;
-                const dictChars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_';
-                
-                // Find common patterns and replace with dictionary entries
-                let compressed = jsonString;
-                const commonPatterns = ['"question"', '"definition"', '"example"', '"title"', '","', '":', '":', '":', '"}', '"{', '",', '"]', '"[', '"]', '",'];
-                
-                commonPatterns.forEach(pattern => {
-                    if (compressed.includes(pattern)) {
-                        const dictChar = dictChars[dictIndex % dictChars.length];
-                        dict[dictChar] = pattern;
-                        compressed = compressed.replace(new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), dictChar);
-                        dictIndex++;
-                    }
-                });
-                
-                // Add dictionary to the beginning
-                const dictString = Object.keys(dict).map(key => key + dict[key]).join('');
-                const finalCompressed = dictString + '|' + compressed;
-                
-                // Base64 encode for URL safety
-                return btoa(finalCompressed);
-            } catch (error) {
-                console.error('Advanced compression failed:', error);
-                return null;
-            }
-        }
-
-        /**
-         * Decompresses data using the advanced algorithm
-         */
-        function decompressDeckDataAdvanced(compressedData) {
-            try {
-                // Base64 decode
-                const decompressed = atob(compressedData);
-                
-                // Split dictionary and data
-                const [dictString, data] = decompressed.split('|');
-                
-                // Rebuild dictionary
-                const dict = {};
-                let i = 0;
-                while (i < dictString.length) {
-                    const key = dictString[i];
-                    const value = dictString.substring(i + 1, i + 1 + 100); // Extract value (simplified)
-                    dict[key] = value;
-                    i += value.length + 1;
-                }
-                
-                // Replace dictionary entries back
-                let restored = data;
-                Object.entries(dict).forEach(([key, value]) => {
-                    restored = restored.replace(new RegExp(key, 'g'), value);
-                });
-                
-                // Parse JSON
-                const deckData = JSON.parse(restored);
-                
-                // Convert back to full format
-                return {
+                const result = {
                     title: deckData.t,
                     cards: deckData.c.map(card => ({
                         question: card[0],
@@ -560,11 +459,15 @@
                         example: card[2]
                     }))
                 };
+                console.log('Final result:', result);
+                return result;
             } catch (error) {
-                console.error('Advanced decompression failed:', error);
+                console.error('Decompression failed:', error);
+                console.error('Compressed data:', compressedData);
                 return null;
             }
         }
+
 
         /**
          * Parses URL parameters to get compressed data, deck key, or legacy card data
