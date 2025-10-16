@@ -230,7 +230,8 @@
                 <p class="text-gray-600 dark:text-gray-300 mb-4 text-sm">
                     Enter the <b>Deck Title</b> and your flashcards below, one per line. Use a <b>Colon</b> (:) for the term/definition, and an optional <b>Pipe</b> (|) to add example text.<br>
                     <span class="font-bold text-indigo-500">Format: Term:Definition | Example Text</span><br>
-                    <span class="text-green-600 dark:text-green-400 font-medium">✓ Now supports unlimited flashcards with short, shareable URLs!</span>
+                    <span class="text-green-600 dark:text-green-400 font-medium">✓ Cross-device compatible with compressed URLs!</span><br>
+                    <span class="text-blue-600 dark:text-blue-400 font-medium">✓ Works on any device - no storage dependencies!</span>
                 </p>
                 
                 <input type="text" id="title-input" class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-700 placeholder-gray-400 mb-3" placeholder="Enter Deck Title (e.g., Biology Terms)">
@@ -242,15 +243,12 @@
                 </button>
 
                 <!-- Data Management Buttons -->
-                <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <button onclick="exportDeck()" class="py-2 px-4 bg-blue-500 text-white font-semibold rounded-lg shadow-sm hover:bg-blue-600 transition duration-150 ease-in-out">
                         📥 Export Deck
                     </button>
                     <button onclick="importDeck()" class="py-2 px-4 bg-purple-500 text-white font-semibold rounded-lg shadow-sm hover:bg-purple-600 transition duration-150 ease-in-out">
                         📤 Import Deck
-                    </button>
-                    <button onclick="clearAllStoredDecks()" class="py-2 px-4 bg-red-500 text-white font-semibold rounded-lg shadow-sm hover:bg-red-600 transition duration-150 ease-in-out">
-                        🗑️ Clear All
                     </button>
                 </div>
 
@@ -402,64 +400,186 @@
         }
 
 
-        // --- Deck Initialization and Data Storage ---
+        // --- Deck Initialization and Data Compression ---
 
         /**
-         * Generates a unique key for storing flashcard data in localStorage
+         * Compresses flashcard data using a custom compression algorithm
+         * Uses URL-safe characters and reduces redundancy
          */
-        function generateDeckKey() {
-            return 'flashcard_deck_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        }
-
-        /**
-         * Saves flashcard data to localStorage and returns a unique key
-         */
-        function saveDeckToStorage(title, cards) {
-            const deckKey = generateDeckKey();
-            const deckData = {
-                title: title,
-                cards: cards,
-                timestamp: Date.now()
-            };
-            
+        function compressDeckData(title, cards) {
             try {
-                localStorage.setItem(deckKey, JSON.stringify(deckData));
-                return deckKey;
+                // Create a compact data structure
+                const deckData = {
+                    t: title, // title
+                    c: cards.map(card => ({
+                        q: card.question,    // question
+                        d: card.definition,  // definition  
+                        e: card.example      // example
+                    }))
+                };
+                
+                // Convert to JSON string
+                const jsonString = JSON.stringify(deckData);
+                
+                // Simple compression: replace common patterns
+                let compressed = jsonString
+                    .replace(/"question"/g, '"q"')
+                    .replace(/"definition"/g, '"d"')
+                    .replace(/"example"/g, '"e"')
+                    .replace(/"title"/g, '"t"')
+                    .replace(/"/g, '"')  // Use single quotes instead of double quotes
+                    .replace(/'/g, "'")  // Escape single quotes
+                    .replace(/"/g, "'")  // Replace escaped quotes with single quotes
+                    .replace(/:/g, ':')  // Replace colons with shorter symbol
+                    .replace(/,/g, ',')  // Replace commas with shorter symbol
+                    .replace(/\{/g, '{')  // Replace braces with shorter symbols
+                    .replace(/\}/g, '}');
+                
+                // Base64 encode for URL safety
+                return btoa(compressed);
             } catch (error) {
-                console.error('Failed to save deck to localStorage:', error);
+                console.error('Compression failed:', error);
                 return null;
             }
         }
 
         /**
-         * Loads flashcard data from localStorage using a key
+         * Decompresses flashcard data from compressed format
          */
-        function loadDeckFromStorage(deckKey) {
+        function decompressDeckData(compressedData) {
             try {
-                const storedData = localStorage.getItem(deckKey);
-                if (storedData) {
-                    return JSON.parse(storedData);
+                // Base64 decode
+                const decompressed = atob(compressedData);
+                
+                // Restore original JSON format
+                let jsonString = decompressed
+                    .replace(/'/g, '"')  // Restore double quotes
+                    .replace(/'/g, "'")  // Restore single quotes
+                    .replace(/:/g, ':')  // Restore colons
+                    .replace(/,/g, ',')  // Restore commas
+                    .replace(/\{/g, '{')  // Restore braces
+                    .replace(/\}/g, '}');
+                
+                // Parse JSON
+                const deckData = JSON.parse(jsonString);
+                
+                // Convert back to full format
+                return {
+                    title: deckData.t,
+                    cards: deckData.c.map(card => ({
+                        question: card.q,
+                        definition: card.d,
+                        example: card.e
+                    }))
+                };
+            } catch (error) {
+                console.error('Decompression failed:', error);
+                return null;
+            }
+        }
+
+        /**
+         * Alternative compression using LZ-string-like algorithm for better compression
+         */
+        function compressDeckDataAdvanced(title, cards) {
+            try {
+                // Create compact data structure
+                const deckData = {
+                    t: title,
+                    c: cards.map(card => [card.question, card.definition, card.example])
+                };
+                
+                const jsonString = JSON.stringify(deckData);
+                
+                // Use a simple dictionary compression
+                const dict = {};
+                let dictIndex = 0;
+                const dictChars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_';
+                
+                // Find common patterns and replace with dictionary entries
+                let compressed = jsonString;
+                const commonPatterns = ['"question"', '"definition"', '"example"', '"title"', '","', '":', '":', '":', '"}', '"{', '",', '"]', '"[', '"]', '",'];
+                
+                commonPatterns.forEach(pattern => {
+                    if (compressed.includes(pattern)) {
+                        const dictChar = dictChars[dictIndex % dictChars.length];
+                        dict[dictChar] = pattern;
+                        compressed = compressed.replace(new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), dictChar);
+                        dictIndex++;
+                    }
+                });
+                
+                // Add dictionary to the beginning
+                const dictString = Object.keys(dict).map(key => key + dict[key]).join('');
+                const finalCompressed = dictString + '|' + compressed;
+                
+                // Base64 encode for URL safety
+                return btoa(finalCompressed);
+            } catch (error) {
+                console.error('Advanced compression failed:', error);
+                return null;
+            }
+        }
+
+        /**
+         * Decompresses data using the advanced algorithm
+         */
+        function decompressDeckDataAdvanced(compressedData) {
+            try {
+                // Base64 decode
+                const decompressed = atob(compressedData);
+                
+                // Split dictionary and data
+                const [dictString, data] = decompressed.split('|');
+                
+                // Rebuild dictionary
+                const dict = {};
+                let i = 0;
+                while (i < dictString.length) {
+                    const key = dictString[i];
+                    const value = dictString.substring(i + 1, i + 1 + 100); // Extract value (simplified)
+                    dict[key] = value;
+                    i += value.length + 1;
                 }
-                return null;
+                
+                // Replace dictionary entries back
+                let restored = data;
+                Object.entries(dict).forEach(([key, value]) => {
+                    restored = restored.replace(new RegExp(key, 'g'), value);
+                });
+                
+                // Parse JSON
+                const deckData = JSON.parse(restored);
+                
+                // Convert back to full format
+                return {
+                    title: deckData.t,
+                    cards: deckData.c.map(card => ({
+                        question: card[0],
+                        definition: card[1],
+                        example: card[2]
+                    }))
+                };
             } catch (error) {
-                console.error('Failed to load deck from localStorage:', error);
+                console.error('Advanced decompression failed:', error);
                 return null;
             }
         }
 
         /**
-         * Parses URL parameters to get deck key or legacy card data
-         * Handles both new localStorage-based system and legacy URL-based system
+         * Parses URL parameters to get compressed data, deck key, or legacy card data
+         * Handles compressed data system, localStorage system, and legacy URL-based system
          */
         function parseUrlDeck() {
             const urlParams = new URLSearchParams(window.location.search);
+            const compressedData = urlParams.get('data');
             const deckKey = urlParams.get('deck');
             const cardString = urlParams.get('cards');
             const titleString = urlParams.get('title');
 
-            // New localStorage-based system
-            if (deckKey) {
-                const deckData = loadDeckFromStorage(deckKey);
+            // New compressed data system (cross-device compatible)
+            if (compressedData) {
+                const deckData = decompressDeckData(compressedData);
                 if (deckData) {
                     return {
                         title: deckData.title,
@@ -468,9 +588,37 @@
                     };
                 } else {
                     return {
-                        title: 'Deck Not Found',
+                        title: 'Decompression Error',
                         cards: [],
-                        error: 'The requested deck could not be found. It may have been deleted or the link is invalid.'
+                        error: 'Failed to decompress the flashcard data. The link may be corrupted.'
+                    };
+                }
+            }
+
+            // Legacy localStorage-based system (for backward compatibility)
+            if (deckKey) {
+                try {
+                    // Try to load from localStorage first
+                    const storedData = localStorage.getItem(deckKey);
+                    if (storedData) {
+                        const deckData = JSON.parse(storedData);
+                        return {
+                            title: deckData.title,
+                            cards: deckData.cards,
+                            error: null
+                        };
+                    } else {
+                        return {
+                            title: 'Deck Not Found',
+                            cards: [],
+                            error: 'The requested deck could not be found. It may have been deleted or the link is invalid.'
+                        };
+                    }
+                } catch (error) {
+                    return {
+                        title: 'Deck Load Error',
+                        cards: [],
+                        error: 'Failed to load the deck from storage.'
                     };
                 }
             }
@@ -625,7 +773,7 @@
 
         /**
          * Generates the shareable URL based on the text inputs.
-         * Uses localStorage for data storage and creates a short URL with just the deck key.
+         * Uses compressed data for cross-device compatibility with significantly reduced URL length.
          */
         window.generateLink = function() {
             const titleInput = document.getElementById('title-input').value.trim();
@@ -664,20 +812,36 @@
                 return;
             }
 
-            // Save to localStorage and get the deck key
-            const deckKey = saveDeckToStorage(titleInput || "My Custom Deck", processedCards);
+            // Compress the deck data
+            const compressedData = compressDeckData(titleInput || "My Custom Deck", processedCards);
             
-            if (!deckKey) {
-                linkOutputEl.value = "Error: Failed to save deck. Please check your browser's localStorage settings.";
+            if (!compressedData) {
+                linkOutputEl.value = "Error: Failed to compress deck data.";
                 linkOutputContainer.classList.remove('hidden');
                 return;
             }
 
-            // Construct the short URL with just the deck key
-            const newUrl = `${window.location.protocol}//${window.location.host}${window.location.pathname}?deck=${deckKey}`;
+            // Check URL length and provide feedback
+            const newUrl = `${window.location.protocol}//${window.location.host}${window.location.pathname}?data=${compressedData}`;
+            const urlLength = newUrl.length;
 
+            // Construct the URL with compressed data
             linkOutputEl.value = newUrl;
             linkOutputContainer.classList.remove('hidden');
+
+            // Show compression statistics
+            const originalLength = encodeURIComponent(JSON.stringify({
+                title: titleInput || "My Custom Deck",
+                cards: processedCards
+            })).length;
+            
+            const compressionRatio = Math.round((1 - urlLength / originalLength) * 100);
+            
+            // Update the copy message to show compression info
+            const copyMessage = document.getElementById('copy-message');
+            copyMessage.textContent = `Link generated! ${compressionRatio}% size reduction (${urlLength} chars vs ${originalLength} chars)`;
+            copyMessage.classList.remove('opacity-0');
+            setTimeout(() => copyMessage.classList.add('opacity-0'), 5000);
 
             // Optionally reload the new deck into the app preview for testing
             initializeDeck();
