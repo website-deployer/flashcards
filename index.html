@@ -487,7 +487,7 @@
                     })
                 };
                 
-                // Convert to JSON string
+                // Convert to JSON string with proper Unicode handling
                 const jsonString = JSON.stringify(deckData);
                 
                 // Check if the string is too large for URL
@@ -495,12 +495,14 @@
                     throw new Error('Deck data is too large for URL compression');
                 }
                 
-                // Base64 encode for URL safety
-                const compressed = btoa(jsonString);
+                // Use encodeURIComponent first to handle Unicode properly, then Base64 encode
+                const uriEncoded = encodeURIComponent(jsonString);
+                const compressed = btoa(uriEncoded);
                 
                 return compressed;
             } catch (error) {
                 console.error('Compression failed:', error);
+                console.error('Error details:', error.message);
                 return null;
             }
         }
@@ -510,8 +512,11 @@
          */
         function decompressDeckData(compressedData) {
             try {
-                // Base64 decode
-                const jsonString = atob(compressedData);
+                // Base64 decode first
+                const uriEncoded = atob(compressedData);
+                
+                // Then decode URI component to handle Unicode properly
+                const jsonString = decodeURIComponent(uriEncoded);
                 
                 // Parse JSON
                 const deckData = JSON.parse(jsonString);
