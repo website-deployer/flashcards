@@ -231,13 +231,14 @@
                 <p class="text-gray-600 dark:text-gray-300 mb-4 text-sm">
                     Enter the <b>Deck Title</b> and your flashcards below, one per line. Use a <b>Colon</b> (:) for the term/definition, and an optional <b>Pipe</b> (|) to add example text.<br>
                     <span class="font-bold text-indigo-500">Format: Term:Definition | Example Text</span><br>
+                    <span class="text-purple-600 dark:text-purple-400 font-medium">✓ Latin accent support: Use ^ for macrons (ā, ē, ī, ō, ū) or _ for underscores!</span><br>
                     <span class="text-green-600 dark:text-green-400 font-medium">✓ Cross-device compatible with compressed URLs!</span><br>
                     <span class="text-blue-600 dark:text-blue-400 font-medium">✓ Works on any device - no storage dependencies!</span>
                 </p>
                 
                 <input type="text" id="title-input" class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-700 placeholder-gray-400 mb-3" placeholder="Enter Deck Title (e.g., Biology Terms)">
 
-                <textarea id="card-input" rows="5" class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-700 placeholder-gray-400 mb-4 resize-none" placeholder="Example:&#10;Photosynthesis:Process plants use to make food | This process uses sunlight and water.&#10;Mitosis:Cell division resulting in two identical cells | Used by the body for growth and repair."></textarea>
+                <textarea id="card-input" rows="5" class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-700 placeholder-gray-400 mb-4 resize-none" placeholder="Example:&#10;ferociter:fiercely | He fought ferociter in battle.&#10;conspicit:catches sight of | She conspicit the enemy.&#10;intent^e:intently | He listened intent^e to the lecture."></textarea>
                 
                 <button onclick="generateLink()" class="w-full py-3 bg-green-500 text-white font-bold rounded-lg shadow-md hover:bg-green-600 transition duration-150 ease-in-out">
                     Generate Shareable Link
@@ -297,6 +298,57 @@
         // --- Utility Functions ---
 
         /**
+         * Formats Latin text with proper diacritical marks and accent formatting
+         * Converts common Latin diacritical representations to proper Unicode characters
+         */
+        function formatLatinAccents(text) {
+            if (!text) return text;
+            
+            // Latin macron mappings (long vowels)
+            const macronMap = {
+                'a': 'ā', 'A': 'Ā',
+                'e': 'ē', 'E': 'Ē', 
+                'i': 'ī', 'I': 'Ī',
+                'o': 'ō', 'O': 'Ō',
+                'u': 'ū', 'U': 'Ū'
+            };
+            
+            // Latin breve mappings (short vowels) - less common but included for completeness
+            const breveMap = {
+                'a': 'ă', 'A': 'Ă',
+                'e': 'ĕ', 'E': 'Ĕ',
+                'i': 'ĭ', 'I': 'Ĭ',
+                'o': 'ŏ', 'O': 'Ŏ',
+                'u': 'ŭ', 'U': 'Ŭ'
+            };
+            
+            // Process text to handle various accent mark representations
+            let formattedText = text;
+            
+            // Handle common Latin accent representations
+            // Pattern 1: vowel + macron symbol (ā, ē, etc.)
+            formattedText = formattedText.replace(/([aeiouAEIOU])̄/g, (match, vowel) => macronMap[vowel] || match);
+            
+            // Pattern 2: vowel + underscore (a_, e_, etc.) - common in some systems
+            formattedText = formattedText.replace(/([aeiouAEIOU])_/g, (match, vowel) => macronMap[vowel] || match);
+            
+            // Pattern 3: vowel + caret (â, ê, etc.) - convert to macrons for Latin
+            formattedText = formattedText.replace(/([aeiouAEIOU])\^/g, (match, vowel) => macronMap[vowel] || match);
+            
+            // Pattern 4: vowel + grave accent (à, è, etc.) - convert to macrons for Latin
+            formattedText = formattedText.replace(/([aeiouAEIOU])`/g, (match, vowel) => macronMap[vowel] || match);
+            
+            // Handle breve accents if present (less common in Latin)
+            formattedText = formattedText.replace(/([aeiouAEIOU])̆/g, (match, vowel) => breveMap[vowel] || match);
+            
+            // Handle other common Latin diacritics
+            // Acute accents on vowels (á, é, etc.) - sometimes used in Latin
+            formattedText = formattedText.replace(/([aeiouAEIOU])´/g, (match, vowel) => macronMap[vowel] || match);
+            
+            return formattedText;
+        }
+
+        /**
          * Shuffles an array in place (Fisher-Yates algorithm).
          */
         function shuffle(array) {
@@ -321,8 +373,6 @@
             // 3. Render the first card in the new order
             renderCard();
             
-            // Provide feedback in the console, not visible to user but helpful for debugging
-            console.log("Deck successfully reshuffled.");
         }
 
 
@@ -409,8 +459,6 @@
          */
         function compressDeckData(title, cards) {
             try {
-                console.log('Compressing data:', { title, cards });
-                
                 // Create a compact data structure with short property names
                 const deckData = {
                     t: title, // title
@@ -421,15 +469,11 @@
                     ])
                 };
                 
-                console.log('Deck data structure:', deckData);
-                
                 // Convert to JSON string
                 const jsonString = JSON.stringify(deckData);
-                console.log('JSON string:', jsonString);
                 
                 // Base64 encode for URL safety
                 const compressed = btoa(jsonString);
-                console.log('Compressed result:', compressed);
                 
                 return compressed;
             } catch (error) {
@@ -445,11 +489,9 @@
             try {
                 // Base64 decode
                 const jsonString = atob(compressedData);
-                console.log('Decompressed JSON string:', jsonString);
                 
                 // Parse JSON
                 const deckData = JSON.parse(jsonString);
-                console.log('Parsed deck data:', deckData);
                 
                 // Convert back to full format
                 const result = {
@@ -460,7 +502,6 @@
                         example: card[2]
                     }))
                 };
-                console.log('Final result:', result);
                 return result;
             } catch (error) {
                 console.error('Decompression failed:', error);
@@ -556,7 +597,11 @@
                             const example = examplePart || "(Example text not provided)";
 
                             if (question && definition) {
-                                return { question, definition, example };
+                                return { 
+                                    question: formatLatinAccents(question), 
+                                    definition: formatLatinAccents(definition), 
+                                    example: formatLatinAccents(example) 
+                                };
                             }
                         }
                         return null; 
@@ -620,11 +665,11 @@
 
             const card = currentDeck[currentCardIndex];
             
-            // Update Content
-            cardFrontText.textContent = card.question;
-            cardBackDefEl.textContent = card.definition;
+            // Update Content with accent formatting
+            cardFrontText.innerHTML = formatLatinAccents(card.question);
+            cardBackDefEl.innerHTML = formatLatinAccents(card.definition);
             // Set example text, showing a placeholder if empty
-            cardBackExEl.textContent = card.example || "(No example text provided)";
+            cardBackExEl.innerHTML = formatLatinAccents(card.example || "(No example text provided)");
 
             // Update Status
             cardCounterEl.textContent = `Card ${currentCardIndex + 1} / ${currentDeck.length}`;
@@ -704,7 +749,11 @@
                     const example = examplePart || "(Example text not provided)";
 
                     if (question && definition) {
-                        return { question, definition, example };
+                        return { 
+                            question: formatLatinAccents(question), 
+                            definition: formatLatinAccents(definition), 
+                            example: formatLatinAccents(example) 
+                        };
                     }
                 }
                 return null;
@@ -747,7 +796,7 @@
             copyMessage.classList.remove('opacity-0');
             setTimeout(() => copyMessage.classList.add('opacity-0'), 5000);
 
-            // Optionally reload the new deck into the app preview for testing
+            // Reload the new deck into the app preview
             initializeDeck();
         }
 
@@ -854,6 +903,7 @@
                 alert(`Cleared ${keysToRemove.length} stored decks.`);
             }
         }
+
 
         // --- Initialization on Load ---
         document.addEventListener('DOMContentLoaded', () => {
