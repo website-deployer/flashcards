@@ -304,6 +304,13 @@
         function formatLatinAccents(text) {
             if (!text) return text;
             
+            // Check if text already contains proper Unicode diacritical marks
+            // If it does, return as-is to avoid double-processing
+            const hasUnicodeAccents = /[āēīōūăĕĭŏŭĀĒĪŌŪĂĔĬŎŬ]/.test(text);
+            if (hasUnicodeAccents) {
+                return text;
+            }
+            
             // Latin macron mappings (long vowels)
             const macronMap = {
                 'a': 'ā', 'A': 'Ā',
@@ -459,18 +466,34 @@
          */
         function compressDeckData(title, cards) {
             try {
+                // Validate input data
+                if (!title || !cards || !Array.isArray(cards)) {
+                    throw new Error('Invalid input data for compression');
+                }
+                
                 // Create a compact data structure with short property names
                 const deckData = {
                     t: title, // title
-                    c: cards.map(card => [
-                        card.question,    // question
-                        card.definition,  // definition  
-                        card.example      // example
-                    ])
+                    c: cards.map(card => {
+                        // Ensure each card has the required properties
+                        if (!card || typeof card.question === 'undefined' || typeof card.definition === 'undefined') {
+                            throw new Error('Invalid card structure');
+                        }
+                        return [
+                            card.question || '',    // question
+                            card.definition || '',  // definition  
+                            card.example || ''      // example
+                        ];
+                    })
                 };
                 
                 // Convert to JSON string
                 const jsonString = JSON.stringify(deckData);
+                
+                // Check if the string is too large for URL
+                if (jsonString.length > 50000) {
+                    throw new Error('Deck data is too large for URL compression');
+                }
                 
                 // Base64 encode for URL safety
                 const compressed = btoa(jsonString);
@@ -769,7 +792,7 @@
             const compressedData = compressDeckData(titleInput || "My Custom Deck", processedCards);
             
             if (!compressedData) {
-                linkOutputEl.value = "Error: Failed to compress deck data.";
+                linkOutputEl.value = "Error: Failed to compress deck data. This may be due to special characters or data size.";
                 linkOutputContainer.classList.remove('hidden');
                 return;
             }
