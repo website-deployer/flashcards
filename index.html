@@ -752,19 +752,19 @@
         }
 
         /**
-         * Switches the term and definition for the current card.
+         * Switches the structure of all flashcards from term:definition to definition:term.
          */
         window.switchTermDefinition = function() {
             if (currentDeck.length === 0) return;
             
-            const card = currentDeck[currentCardIndex];
+            // Swap term and definition for all cards in the deck
+            currentDeck.forEach(card => {
+                const temp = card.question;
+                card.question = card.definition;
+                card.definition = temp;
+            });
             
-            // Swap term and definition
-            const temp = card.question;
-            card.question = card.definition;
-            card.definition = temp;
-            
-            // Re-render the card with switched content
+            // Re-render the current card to show the switched content
             renderCard();
         }
 
