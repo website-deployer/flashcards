@@ -178,13 +178,13 @@
             </div>
 
             <!-- Controls -->
-            <div class="flex flex-col sm:flex-row items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700">
-                <button id="prev-btn" onclick="prevCard()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-lg shadow-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition duration-150 ease-in-out disabled:opacity-50 w-full sm:w-auto mb-3 sm:mb-0">
+            <div class="flex flex-col sm:flex-row items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 gap-4">
+                <button id="prev-btn" onclick="prevCard()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-lg shadow-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition duration-150 ease-in-out disabled:opacity-50 w-full sm:w-auto">
                     &larr; Previous
                 </button>
-                <div class="flex flex-wrap gap-2 sm:gap-4 items-center justify-center">
+                <div class="flex flex-wrap gap-2 sm:gap-4 items-center justify-center flex-shrink-0">
                     <!-- NEW SHUFFLE BUTTON -->
-                    <button id="shuffle-btn" onclick="shuffleDeckAndRender()" title="Shuffle Cards" class="p-2 bg-yellow-500 text-white rounded-lg shadow-sm hover:bg-yellow-600 transition duration-150 ease-in-out">
+                    <button id="shuffle-btn" onclick="shuffleDeckAndRender()" title="Shuffle Cards" class="p-2 bg-yellow-500 text-white rounded-lg shadow-sm hover:bg-yellow-600 transition duration-150 ease-in-out flex-shrink-0">
                         <!-- Shuffle Icon (Lucide-React style, but as SVG) -->
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="16 3 21 3 21 8"/>
@@ -196,7 +196,7 @@
                         </svg>
                     </button>
                     <!-- Theme Toggle Button -->
-                    <button id="theme-toggle" title="Toggle Dark/Light Mode" class="p-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg shadow-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition duration-150 ease-in-out">
+                    <button id="theme-toggle" title="Toggle Dark/Light Mode" class="p-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg shadow-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition duration-150 ease-in-out flex-shrink-0">
                         <!-- Sun Icon (Light Mode) -->
                         <svg id="sun-icon" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="display:none;">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -207,22 +207,22 @@
                         </svg>
                     </button>
                     <!-- Fullscreen Button -->
-                    <button id="fullscreen-btn" onclick="toggleFullscreen()" title="Toggle Fullscreen" class="p-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg shadow-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition duration-150 ease-in-out">
+                    <button id="fullscreen-btn" onclick="toggleFullscreen()" title="Toggle Fullscreen" class="p-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg shadow-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition duration-150 ease-in-out flex-shrink-0">
                         <!-- Fullscreen Icon -->
                         <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-3v4m0 0h-4m4 0l-5-5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
                         </svg>
                     </button>
-                    <div id="card-counter" class="text-lg text-gray-600 dark:text-gray-300 font-medium">Card 0 / 0</div>
+                    <div id="card-counter" class="text-lg text-gray-600 dark:text-gray-300 font-medium min-w-[80px] text-center">Card 0 / 0</div>
                 </div>
-                <div class="flex flex-wrap gap-2 items-center justify-center w-full sm:w-auto mt-3 sm:mt-0">
-                    <button id="flip-button" onclick="flipCard()" class="px-4 py-2 bg-indigo-500 text-white font-semibold rounded-lg shadow-lg hover:bg-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-150 text-sm sm:text-base">
+                <div class="flex flex-wrap gap-2 items-center justify-center w-full sm:w-auto">
+                    <button id="flip-button" onclick="flipCard()" class="px-4 py-2 bg-indigo-500 text-white font-semibold rounded-lg shadow-lg hover:bg-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-150 text-sm sm:text-base flex-shrink-0">
                         Flip
                     </button>
-                    <button id="switch-button" onclick="switchTermDefinition()" class="px-4 py-2 bg-purple-500 text-white font-semibold rounded-lg shadow-lg hover:bg-purple-600 focus:outline-none focus:ring-4 focus:ring-purple-300 transition-all duration-150 text-sm sm:text-base">
+                    <button id="switch-button" onclick="switchTermDefinition()" class="px-4 py-2 bg-purple-500 text-white font-semibold rounded-lg shadow-lg hover:bg-purple-600 focus:outline-none focus:ring-4 focus:ring-purple-300 transition-all duration-150 text-sm sm:text-base flex-shrink-0">
                         Switch
                     </button>
-                    <button id="next-btn" onclick="nextCard()" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-sm hover:bg-indigo-700 transition duration-150 ease-in-out disabled:opacity-50 w-full sm:w-auto">
+                    <button id="next-btn" onclick="nextCard()" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-sm hover:bg-indigo-700 transition duration-150 ease-in-out disabled:opacity-50 w-full sm:w-auto flex-shrink-0">
                         Next &rarr;
                     </button>
                 </div>
@@ -236,9 +236,6 @@
                 <p class="text-gray-600 dark:text-gray-300 mb-4 text-sm">
                     Enter the <b>Deck Title</b> and your flashcards below, one per line. Use a <b>Colon</b> (:) for the term/definition, and an optional <b>Pipe</b> (|) to add example text.<br>
                     <span class="font-bold text-indigo-500">Format: Term:Definition | Example Text</span><br>
-                    <span class="text-purple-600 dark:text-purple-400 font-medium">✓ Latin accent support: Use ^ for macrons (ā, ē, ī, ō, ū) or _ for underscores!</span><br>
-                    <span class="text-green-600 dark:text-green-400 font-medium">✓ Cross-device compatible with compressed URLs!</span><br>
-                    <span class="text-blue-600 dark:text-blue-400 font-medium">✓ Works on any device - no storage dependencies!</span>
                 </p>
                 
                 <input type="text" id="title-input" class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-700 placeholder-gray-400 mb-3" placeholder="Enter Deck Title (e.g., Biology Terms)">
