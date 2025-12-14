@@ -178,29 +178,30 @@
             </div>
 
             <!-- Controls -->
-            <div class="p-3 bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700">
-                <!-- Top Row: Navigation -->
-                <div class="flex items-center justify-center gap-2 mb-2">
-                    <button id="prev-btn" onclick="prevCard()" class="px-3 py-1.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-lg shadow-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition duration-150 ease-in-out disabled:opacity-50">
-                        &larr; Previous
-                    </button>
-                    <div id="card-counter" class="text-sm text-gray-600 dark:text-gray-300 font-medium px-3 py-1.5 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-600">
-                        Card 0 / 0
+            <div class="flex justify-center mb-6">
+                <div class="p-3 bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 inline-block">
+                    <!-- Top Row: Navigation -->
+                    <div class="flex items-center justify-center gap-2 mb-2">
+                        <button id="prev-btn" onclick="prevCard()" class="px-3 py-1.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-lg shadow-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition duration-150 ease-in-out disabled:opacity-50">
+                            &larr; Previous
+                        </button>
+                        <div id="card-counter" class="text-sm text-gray-600 dark:text-gray-300 font-medium px-3 py-1.5 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-600">
+                            Card 0 / 0
+                        </div>
+                        <button id="next-btn" onclick="nextCard()" class="px-3 py-1.5 bg-indigo-600 text-white font-semibold rounded-lg shadow-sm hover:bg-indigo-700 transition duration-150 ease-in-out disabled:opacity-50">
+                            Next &rarr;
+                        </button>
                     </div>
-                    <button id="next-btn" onclick="nextCard()" class="px-3 py-1.5 bg-indigo-600 text-white font-semibold rounded-lg shadow-sm hover:bg-indigo-700 transition duration-150 ease-in-out disabled:opacity-50">
-                        Next &rarr;
-                    </button>
-                </div>
-                
-                <!-- Bottom Row: Actions -->
-                <div class="flex items-center justify-center gap-2">
-                    <button id="flip-button" onclick="flipCard()" class="px-4 py-1.5 bg-indigo-500 text-white font-semibold rounded-lg shadow-lg hover:bg-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-150 text-sm">
-                        Flip Card
-                    </button>
-                    <button id="switch-button" onclick="switchTermDefinition()" class="px-4 py-1.5 bg-purple-500 text-white font-semibold rounded-lg shadow-lg hover:bg-purple-600 focus:outline-none focus:ring-4 focus:ring-purple-300 transition-all duration-150 text-sm">
-                        Switch Term/Definition
-                    </button>
-                    <div class="flex items-center gap-1.5 ml-3 pl-3 border-l border-gray-300 dark:border-gray-600">
+                    
+                    <!-- Bottom Row: Actions -->
+                    <div class="flex items-center justify-center gap-2">
+                        <button id="flip-button" onclick="flipCard()" class="px-4 py-1.5 bg-indigo-500 text-white font-semibold rounded-lg shadow-lg hover:bg-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-150 text-sm">
+                            Flip Card
+                        </button>
+                        <button id="switch-button" onclick="switchTermDefinition()" class="px-4 py-1.5 bg-purple-500 text-white font-semibold rounded-lg shadow-lg hover:bg-purple-600 focus:outline-none focus:ring-4 focus:ring-purple-300 transition-all duration-150 text-sm">
+                            Switch Term/Definition
+                        </button>
+                        <div class="flex items-center gap-1.5 ml-3 pl-3 border-l border-gray-300 dark:border-gray-600">
                         <!-- NEW SHUFFLE BUTTON -->
                         <button id="shuffle-btn" onclick="shuffleDeckAndRender()" title="Shuffle Cards" class="p-2 bg-yellow-500 text-white rounded-lg shadow-sm hover:bg-yellow-600 transition duration-150 ease-in-out">
                             <!-- Shuffle Icon (Lucide-React style, but as SVG) -->
