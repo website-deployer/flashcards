@@ -11,26 +11,46 @@
     <script>
         tailwind.config = {
             darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
         }
     </script>
+    <!-- LZ-String for high-ratio URL-safe compression -->
+    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
     <!-- Use Inter font family -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* Base styles for dark/light mode transition */
         body {
             font-family: 'Inter', sans-serif;
             transition: background-color 0.3s, color 0.3s;
         }
 
+        /* Ambient gradient background */
+        .app-bg {
+            background:
+                radial-gradient(1200px 600px at 10% -10%, rgba(99, 102, 241, 0.18), transparent 60%),
+                radial-gradient(1000px 500px at 90% 110%, rgba(168, 85, 247, 0.15), transparent 60%);
+        }
+        .dark .app-bg {
+            background:
+                radial-gradient(1200px 600px at 10% -10%, rgba(99, 102, 241, 0.25), transparent 60%),
+                radial-gradient(1000px 500px at 90% 110%, rgba(168, 85, 247, 0.20), transparent 60%);
+        }
+
         /* 3D Flip Animation */
         .card-container {
-            perspective: 1000px;
+            perspective: 1200px;
         }
         .card-inner {
             position: relative;
             width: 100%;
             height: 100%;
-            transition: transform 0.6s;
+            transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
             transform-style: preserve-3d;
         }
         .card-container.flipped .card-inner {
@@ -42,21 +62,31 @@
             height: 100%;
             backface-visibility: hidden;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
             padding: 2rem;
             border-radius: 1.5rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 20px 40px -12px rgba(79, 70, 229, 0.18), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
         .card-back {
             transform: rotateY(180deg);
         }
-        
+        .card-hint {
+            position: absolute;
+            bottom: 1rem;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            opacity: 0.5;
+            font-weight: 600;
+        }
+
         /* Responsive Text Scaling - Default/Mobile */
         .card-content-front {
             font-size: 2.25rem;
-            font-weight: 600;
+            font-weight: 700;
             transition: font-size 0.3s;
         }
         .card-content-back-def {
@@ -81,23 +111,39 @@
             }
         }
 
+        /* Subtle slide-in when changing cards */
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .card-anim {
+            animation: cardIn 0.25s ease-out;
+        }
+
+        /* Keyboard hint chips */
+        .kbd {
+            display: inline-block;
+            padding: 0.1rem 0.45rem;
+            border-radius: 0.375rem;
+            border: 1px solid rgba(120, 120, 140, 0.35);
+            border-bottom-width: 2px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
         /* --- Fullscreen Styles --- */
-        /* Center the card within the fullscreen container and apply background */
         #flashcard-container:fullscreen,
         #flashcard-container:-webkit-full-screen,
         #flashcard-container:-moz-full-screen,
         #flashcard-container:-ms-full-screen {
-            background-color: var(--bg-color, #f3f4f6); /* Fallback */
+            background-color: var(--bg-color, #f3f4f6);
             --bg-color: theme('backgroundColor.gray.100');
-            
-            /* Apply dark mode background if <html> has dark class */
             .dark & {
                 --bg-color: theme('backgroundColor.gray.900');
             }
-            
-            /* Use the computed background color */
             background-color: var(--bg-color);
-            position: fixed; /* Ensures it covers everything */
+            position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
@@ -107,69 +153,74 @@
             justify-content: center;
             margin: 0;
             padding: 0;
-            cursor: pointer; /* Keep cursor pointer for flipping */
+            cursor: pointer;
             z-index: 9999;
         }
 
-        /* Make the card take up a large portion of the viewport in fullscreen */
         #flashcard-container:fullscreen #card-inner,
         #flashcard-container:-webkit-full-screen #card-inner,
         #flashcard-container:-moz-full-screen #card-inner,
         #flashcard-container:-ms-full-screen #card-inner {
-            width: 80vw; 
-            height: 70vh; 
+            width: 80vw;
+            height: 70vh;
             max-width: 90%;
             max-height: 90%;
             border-radius: 2rem;
         }
 
-        /* Adjust text size for optimal viewing in fullscreen */
         #flashcard-container:fullscreen .card-content-front,
         #flashcard-container:-webkit-full-screen .card-content-front,
         #flashcard-container:-moz-full-screen .card-content-front,
         #flashcard-container:-ms-full-screen .card-content-front {
-            font-size: 4rem; 
+            font-size: 4rem;
         }
 
         #flashcard-container:fullscreen .card-content-back-def,
         #flashcard-container:-webkit-full-screen .card-content-back-def,
         #flashcard-container:-moz-full-screen .card-content-back-def,
         #flashcard-container:-ms-full-screen .card-content-back-def {
-            font-size: 2.5rem; 
+            font-size: 2.5rem;
         }
-        
+
         #flashcard-container:fullscreen .card-content-back-ex,
         #flashcard-container:-webkit-full-screen .card-content-back-ex,
         #flashcard-container:-moz-full-screen .card-content-back-ex,
         #flashcard-container:-ms-full-screen .card-content-back-ex {
-            font-size: 1.5rem; 
+            font-size: 1.5rem;
         }
     </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 flex items-center justify-center min-h-screen p-4">
+<body class="app-bg bg-gray-100 dark:bg-gray-900 flex items-center justify-center min-h-screen p-4">
 
     <div class="w-full max-w-2xl mx-auto">
-        
+
         <!-- Header -->
         <header class="text-center mb-6">
-            <h1 id="deck-title" class="text-3xl md:text-4xl font-bold text-gray-800 dark:text-gray-100">Flashcard Deck</h1>
+            <h1 id="deck-title" class="text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">Flashcard Deck</h1>
+            <p id="deck-subtitle" class="mt-1 text-sm text-gray-500 dark:text-gray-400"></p>
         </header>
 
         <main>
             <!-- Progress Bar -->
-            <div class="w-full h-2 mb-6 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden shadow-inner">
-                <div id="progress-bar" class="h-full bg-indigo-500 transition-all duration-300 ease-in-out" style="width: 0%;"></div>
+            <div class="flex items-center gap-3 mb-6">
+                <div class="flex-grow h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden shadow-inner">
+                    <div id="progress-bar" class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-300 ease-in-out" style="width: 0%;"></div>
+                </div>
+                <div id="card-counter" class="text-xs font-semibold text-gray-600 dark:text-gray-300 px-2.5 py-1 bg-white/70 dark:bg-gray-800/70 backdrop-blur rounded-full border border-gray-200 dark:border-gray-700 whitespace-nowrap">
+                    0 / 0
+                </div>
             </div>
 
             <!-- Flashcard Container - Target for Fullscreen -->
             <div id="flashcard-container" class="card-container w-full h-80 cursor-pointer mb-6" onclick="flipCard()">
                 <div id="card-inner" class="card-inner">
                     <!-- Front of Card (Question / Root) -->
-                    <div id="card-front" class="card-front bg-white border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+                    <div id="card-front" class="card-front bg-white/90 backdrop-blur border border-gray-200 dark:bg-gray-800/90 dark:border-gray-700">
                         <p class="card-content-front text-indigo-600 dark:text-indigo-400"></p>
+                        <span class="card-hint text-gray-500 dark:text-gray-400">Tap or press Space to flip</span>
                     </div>
                     <!-- Back of Card (Answer / Definition + Example) -->
-                    <div id="card-back" class="card-back bg-indigo-100 border border-indigo-200 dark:bg-indigo-900 dark:border-indigo-800">
+                    <div id="card-back" class="card-back bg-gradient-to-br from-indigo-100 to-purple-100 border border-indigo-200 dark:from-indigo-950 dark:to-purple-950 dark:border-indigo-800">
                         <div class="text-gray-800 dark:text-gray-100 p-4">
                            <p id="back-definition" class="card-content-back-def text-gray-800 dark:text-gray-100 mb-2"></p>
                            <p id="back-example" class="card-content-back-ex text-gray-600 dark:text-gray-300 italic"></p>
@@ -179,32 +230,28 @@
             </div>
 
             <!-- Controls -->
-            <div class="p-3 bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 mb-6 max-w-fit mx-auto">
+            <div class="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 mb-4 max-w-fit mx-auto">
                 <!-- Top Row: Navigation -->
                 <div class="flex items-center justify-center gap-2 mb-2">
-                    <button id="prev-btn" onclick="prevCard()" class="px-3 py-1.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-lg shadow-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition duration-150 ease-in-out disabled:opacity-50">
+                    <button id="prev-btn" onclick="prevCard()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-xl shadow-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition duration-150 ease-in-out disabled:opacity-40 disabled:cursor-not-allowed">
                         &larr; Previous
                     </button>
-                    <div id="card-counter" class="text-sm text-gray-600 dark:text-gray-300 font-medium px-3 py-1.5 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-600">
-                        Card 0 / 0
-                    </div>
-                    <button id="next-btn" onclick="nextCard()" class="px-3 py-1.5 bg-indigo-600 text-white font-semibold rounded-lg shadow-sm hover:bg-indigo-700 transition duration-150 ease-in-out disabled:opacity-50">
+                    <button id="flip-button" onclick="flipCard()" class="px-5 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold rounded-xl shadow-lg hover:from-indigo-600 hover:to-purple-600 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-150">
+                        Flip
+                    </button>
+                    <button id="next-btn" onclick="nextCard()" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-xl shadow-sm hover:bg-indigo-700 transition duration-150 ease-in-out disabled:opacity-40 disabled:cursor-not-allowed">
                         Next &rarr;
                     </button>
                 </div>
-                
+
                 <!-- Bottom Row: Actions -->
                 <div class="flex items-center justify-center gap-2">
-                    <button id="flip-button" onclick="flipCard()" class="px-4 py-1.5 bg-indigo-500 text-white font-semibold rounded-lg shadow-lg hover:bg-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-all duration-150 text-sm">
-                        Flip Card
-                    </button>
-                    <button id="switch-button" onclick="switchTermDefinition()" class="px-4 py-1.5 bg-purple-500 text-white font-semibold rounded-lg shadow-lg hover:bg-purple-600 focus:outline-none focus:ring-4 focus:ring-purple-300 transition-all duration-150 text-sm">
+                    <button id="switch-button" onclick="switchTermDefinition()" class="px-3 py-1.5 bg-purple-500 text-white font-semibold rounded-lg shadow-sm hover:bg-purple-600 focus:outline-none focus:ring-4 focus:ring-purple-300 transition-all duration-150 text-sm">
                         Switch Term/Definition
                     </button>
-                    <div class="flex items-center gap-1.5 ml-3 pl-3 border-l border-gray-300 dark:border-gray-600">
-                    <!-- NEW SHUFFLE BUTTON -->
-                    <button id="shuffle-btn" onclick="shuffleDeckAndRender()" title="Shuffle Cards" class="p-2 bg-yellow-500 text-white rounded-lg shadow-sm hover:bg-yellow-600 transition duration-150 ease-in-out">
-                        <!-- Shuffle Icon (Lucide-React style, but as SVG) -->
+                    <div class="flex items-center gap-1.5 ml-2 pl-3 border-l border-gray-300 dark:border-gray-600">
+                    <!-- Shuffle Button -->
+                    <button id="shuffle-btn" onclick="shuffleDeckAndRender()" title="Shuffle Cards (S)" class="p-2 bg-amber-500 text-white rounded-lg shadow-sm hover:bg-amber-600 transition duration-150 ease-in-out">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="16 3 21 3 21 8"/>
                             <line x1="4" y1="20" x2="21" y2="3"/>
@@ -216,18 +263,15 @@
                     </button>
                     <!-- Theme Toggle Button -->
                     <button id="theme-toggle" title="Toggle Dark/Light Mode" class="p-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg shadow-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition duration-150 ease-in-out">
-                        <!-- Sun Icon (Light Mode) -->
                         <svg id="sun-icon" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="display:none;">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
-                        <!-- Moon Icon (Dark Mode) -->
                         <svg id="moon-icon" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="display:block;">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                         </svg>
                     </button>
                     <!-- Fullscreen Button -->
                     <button id="fullscreen-btn" onclick="toggleFullscreen()" title="Toggle Fullscreen" class="p-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg shadow-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition duration-150 ease-in-out">
-                        <!-- Fullscreen Icon -->
                         <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-3v4m0 0h-4m4 0l-5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
                         </svg>
@@ -235,32 +279,44 @@
                     </div>
                 </div>
             </div>
-            
+
+            <!-- Keyboard hints -->
+            <p class="text-center text-xs text-gray-500 dark:text-gray-400 mb-6">
+                <span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> navigate &nbsp;&middot;&nbsp;
+                <span class="kbd">Space</span> flip &nbsp;&middot;&nbsp;
+                <span class="kbd">S</span> shuffle
+            </p>
+
             <hr class="w-full border-t border-gray-300 dark:border-gray-700 my-8">
 
             <!-- URL Generator Section -->
-            <div class="w-full bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mt-6">
-                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">Flashcard Link Generator</h2>
+            <div class="w-full bg-white/80 dark:bg-gray-800/80 backdrop-blur p-6 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 mt-6">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-1">Flashcard Link Generator</h2>
                 <p class="text-gray-600 dark:text-gray-300 mb-4 text-sm">
-                    Enter the <b>Deck Title</b> and your flashcards below, one per line. Use a <b>Colon</b> (:) for the term/definition, and an optional <b>Pipe</b> (|) to add example text.<br>
-                    <span class="font-bold text-indigo-500">Format: Term:Definition | Example Text</span><br>
+                    Create a shareable deck that lives entirely in the link &mdash; nothing is stored on a server.
                 </p>
-                
+                <div class="bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 rounded-lg p-3 mb-4 text-sm text-gray-700 dark:text-gray-300">
+                    <p class="font-semibold text-indigo-600 dark:text-indigo-400 mb-1">One card per line:</p>
+                    <p><code class="font-mono">Term : Definition | Optional example sentence</code></p>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Tip: add a macron to a Latin vowel with <code class="font-mono">^</code> or <code class="font-mono">_</code> (e.g. <code class="font-mono">intent^e</code> &rarr; intentē).</p>
+                </div>
+
                 <input type="text" id="title-input" class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-700 placeholder-gray-400 mb-3" placeholder="Enter Deck Title (e.g., Biology Terms)">
 
-                <textarea id="card-input" rows="5" class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-700 placeholder-gray-400 mb-4 resize-none" placeholder="Example:&#10;ferociter:fiercely | He fought ferociter in battle.&#10;conspicit:catches sight of | She conspicit the enemy.&#10;intent^e:intently | He listened intent^e to the lecture."></textarea>
-                
-                <button onclick="generateLink()" class="w-full py-3 bg-green-500 text-white font-bold rounded-lg shadow-md hover:bg-green-600 transition duration-150 ease-in-out">
+                <textarea id="card-input" rows="6" class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-700 placeholder-gray-400 mb-1 resize-y font-mono text-sm" placeholder="ferociter:fiercely | He fought ferociter in battle.&#10;conspicit:catches sight of | She conspicit the enemy.&#10;intent^e:intently | He listened intent^e to the lecture."></textarea>
+                <p id="input-stats" class="text-xs text-gray-500 dark:text-gray-400 mb-3 text-right"></p>
+
+                <button onclick="generateLink()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white font-bold rounded-xl shadow-md hover:from-emerald-600 hover:to-green-700 transition duration-150 ease-in-out">
                     Generate Shareable Link
                 </button>
 
                 <!-- Data Management Buttons -->
                 <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <button onclick="exportDeck()" class="py-2 px-4 bg-blue-500 text-white font-semibold rounded-lg shadow-sm hover:bg-blue-600 transition duration-150 ease-in-out">
-                        📥 Export Deck
+                        &#128229; Export Deck
                     </button>
                     <button onclick="importDeck()" class="py-2 px-4 bg-purple-500 text-white font-semibold rounded-lg shadow-sm hover:bg-purple-600 transition duration-150 ease-in-out">
-                        📤 Import Deck
+                        &#128228; Import Deck
                     </button>
                 </div>
 
@@ -275,6 +331,16 @@
                             </svg>
                         </button>
                     </div>
+                    <!-- URL capacity meter -->
+                    <div class="mt-3">
+                        <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+                            <span id="url-length-label"></span>
+                            <span id="url-capacity-label"></span>
+                        </div>
+                        <div class="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div id="url-capacity-bar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%;"></div>
+                        </div>
+                    </div>
                     <p id="copy-message" class="text-xs text-green-600 mt-1 opacity-0 transition duration-300">Link copied!</p>
                 </div>
             </div>
@@ -283,16 +349,20 @@
 
     <script>
         // --- DATA ---
-        // Removed default data as requested.
         const defaultCards = [];
+
+        // Practical URL length budget (safe across browsers, chat apps, QR codes)
+        const URL_SAFE_LIMIT = 8000;
+        const URL_HARD_LIMIT = 30000;
 
         // --- Core Application State ---
         let currentDeck = [];
         let currentCardIndex = 0;
         let isFlipped = false;
-        
+
         // --- DOM Elements ---
         const flashcardContainer = document.getElementById('flashcard-container');
+        const cardInnerEl = document.getElementById('card-inner');
         const cardFrontText = document.querySelector('#card-front .card-content-front');
         const cardBackDefEl = document.getElementById('back-definition');
         const cardBackExEl = document.getElementById('back-example');
@@ -300,6 +370,7 @@
         const nextBtn = document.getElementById('next-btn');
         const cardCounterEl = document.getElementById('card-counter');
         const deckTitleEl = document.getElementById('deck-title');
+        const deckSubtitleEl = document.getElementById('deck-subtitle');
         const progressBarEl = document.getElementById('progress-bar');
         const linkOutputContainer = document.getElementById('link-output-container');
         const linkOutputEl = document.getElementById('link-output');
@@ -313,24 +384,20 @@
          */
         function formatLatinAccents(text) {
             if (!text) return text;
-            
-            // Check if text already contains proper Unicode diacritical marks
-            // If it does, return as-is to avoid double-processing
+
             const hasUnicodeAccents = /[āēīōūăĕĭŏŭĀĒĪŌŪĂĔĬŎŬ]/.test(text);
             if (hasUnicodeAccents) {
                 return text;
             }
-            
-            // Latin macron mappings (long vowels)
+
             const macronMap = {
                 'a': 'ā', 'A': 'Ā',
-                'e': 'ē', 'E': 'Ē', 
+                'e': 'ē', 'E': 'Ē',
                 'i': 'ī', 'I': 'Ī',
                 'o': 'ō', 'O': 'Ō',
                 'u': 'ū', 'U': 'Ū'
             };
-            
-            // Latin breve mappings (short vowels) - less common but included for completeness
+
             const breveMap = {
                 'a': 'ă', 'A': 'Ă',
                 'e': 'ĕ', 'E': 'Ĕ',
@@ -338,30 +405,16 @@
                 'o': 'ŏ', 'O': 'Ŏ',
                 'u': 'ŭ', 'U': 'Ŭ'
             };
-            
-            // Process text to handle various accent mark representations
+
             let formattedText = text;
-            
-            // Handle common Latin accent representations
-            // Pattern 1: vowel + macron symbol (ā, ē, etc.)
+
             formattedText = formattedText.replace(/([aeiouAEIOU])̄/g, (match, vowel) => macronMap[vowel] || match);
-            
-            // Pattern 2: vowel + underscore (a_, e_, etc.) - common in some systems
             formattedText = formattedText.replace(/([aeiouAEIOU])_/g, (match, vowel) => macronMap[vowel] || match);
-            
-            // Pattern 3: vowel + caret (â, ê, etc.) - convert to macrons for Latin
             formattedText = formattedText.replace(/([aeiouAEIOU])\^/g, (match, vowel) => macronMap[vowel] || match);
-            
-            // Pattern 4: vowel + grave accent (à, è, etc.) - convert to macrons for Latin
             formattedText = formattedText.replace(/([aeiouAEIOU])`/g, (match, vowel) => macronMap[vowel] || match);
-            
-            // Handle breve accents if present (less common in Latin)
             formattedText = formattedText.replace(/([aeiouAEIOU])̆/g, (match, vowel) => breveMap[vowel] || match);
-            
-            // Handle other common Latin diacritics
-            // Acute accents on vowels (á, é, etc.) - sometimes used in Latin
             formattedText = formattedText.replace(/([aeiouAEIOU])´/g, (match, vowel) => macronMap[vowel] || match);
-            
+
             return formattedText;
         }
 
@@ -374,31 +427,20 @@
                  [array[i], array[j]] = [array[j], array[i]];
              }
          }
-         
+
         /**
          * Shuffles the current deck, resets to the first card, and renders.
          */
         window.shuffleDeckAndRender = function() {
-            if (currentDeck.length <= 1) return; // No need to shuffle 0 or 1 card
-            
-            // 1. Shuffle the array
+            if (currentDeck.length <= 1) return;
             shuffle(currentDeck);
-            
-            // 2. Reset the index and flip state
             currentCardIndex = 0;
-            
-            // 3. Render the first card in the new order
             renderCard();
-            
         }
 
 
         // --- Dark Mode Logic ---
 
-        /**
-         * Applies or removes the 'dark' class on the HTML element.
-         * @param {boolean} enable - True to enable dark mode, false for light.
-         */
         function applyTheme(enable) {
             const htmlEl = document.documentElement;
             const sunIcon = document.getElementById('sun-icon');
@@ -417,26 +459,19 @@
             }
         }
 
-        /**
-         * Toggles between light and dark mode.
-         */
         window.toggleTheme = function() {
             const isDarkMode = document.documentElement.classList.contains('dark');
             applyTheme(!isDarkMode);
         }
-        
-        // --- Fullscreen Logic (Includes promise rejection handling for permission errors) ---
 
-        /**
-         * Toggles fullscreen mode for the flashcard container.
-         */
+        // --- Fullscreen Logic ---
+
         window.toggleFullscreen = function() {
             const container = document.getElementById('flashcard-container');
-            
+
             try {
                 let promiseResult;
                 if (!document.fullscreenElement) {
-                    // Request fullscreen
                     if (container.requestFullscreen) {
                         promiseResult = container.requestFullscreen();
                     } else if (container.webkitRequestFullscreen) { /* Safari */
@@ -445,7 +480,6 @@
                         promiseResult = container.msRequestFullscreen();
                     }
                 } else {
-                    // Exit fullscreen
                     if (document.exitFullscreen) {
                         promiseResult = document.exitFullscreen();
                     } else if (document.webkitExitFullscreen) { /* Safari */
@@ -455,83 +489,103 @@
                     }
                 }
 
-                // If a Promise was returned (modern API), explicitly catch the rejection.
                 if (promiseResult && typeof promiseResult.catch === 'function') {
                     promiseResult.catch(e => {
                         console.warn("Fullscreen operation failed due to browser/permission policy:", e.message);
                     });
                 }
             } catch (e) {
-                // Catch synchronous errors 
                 console.warn("Fullscreen failed (sync error): This is often due to security restrictions in the embedded environment (iframe). The error was:", e.message);
             }
         }
 
 
-        // --- Deck Initialization and Data Compression ---
+        // --- Deck Serialization and Compression ---
 
         /**
-         * Compresses flashcard data using a simple and reliable algorithm
-         * Uses compact JSON structure and Base64 encoding
+         * V2 encoder: serializes the deck to a compact plain-text format then
+         * compresses it with LZ-String into a URL-safe string.
+         *
+         * Plain-text format (delimiters \x1F unit / \x1E record):
+         *   title \x1E q \x1F def \x1F ex \x1E q \x1F def \x1F ex ...
+         * Empty examples serialize to an empty field (zero overhead),
+         * and the LZ dictionary compresses repeated words across cards.
          */
-        function compressDeckData(title, cards) {
+        function encodeDeckV2(title, cards) {
+            const RS = '\x1E', US = '\x1F';
+            const parts = [title || ''];
+            for (const card of cards) {
+                const ex = (card.example && card.example !== '(Example text not provided)') ? card.example : '';
+                parts.push([card.question || '', card.definition || '', ex].join(US));
+            }
+            return LZString.compressToEncodedURIComponent(parts.join(RS));
+        }
+
+        /**
+         * V2 decoder: inverse of encodeDeckV2.
+         */
+        function decodeDeckV2(encoded) {
             try {
-                // Validate input data
-                if (!title || !cards || !Array.isArray(cards)) {
-                    throw new Error('Invalid input data for compression');
-                }
-                
-                // Create a compact data structure with short property names
-                const deckData = {
-                    t: title, // title
-                    c: cards.map(card => {
-                        // Ensure each card has the required properties
-                        if (!card || typeof card.question === 'undefined' || typeof card.definition === 'undefined') {
-                            throw new Error('Invalid card structure');
-                        }
-                        return [
-                            card.question || '',    // question
-                            card.definition || '',  // definition  
-                            card.example || ''      // example
-                        ];
-                    })
-                };
-                
-                // Convert to JSON string with proper Unicode handling
-                const jsonString = JSON.stringify(deckData);
-                
-                // Check if the string is too large for URL
-                if (jsonString.length > 50000) {
-                    throw new Error('Deck data is too large for URL compression');
-                }
-                
-                // Use encodeURIComponent first to handle Unicode properly, then Base64 encode
-                const uriEncoded = encodeURIComponent(jsonString);
-                const compressed = btoa(uriEncoded);
-                
-                return compressed;
-            } catch (error) {
-                console.error('Compression failed:', error);
-                console.error('Error details:', error.message);
+                const raw = LZString.decompressFromEncodedURIComponent(encoded);
+                if (!raw) return null;
+                const RS = '\x1E', US = '\x1F';
+                const records = raw.split(RS);
+                const title = records.shift() || 'My Custom Deck';
+                const cards = records.map(rec => {
+                    const [question = '', definition = '', example = ''] = rec.split(US);
+                    return { question, definition, example };
+                }).filter(c => c.question && c.definition);
+                if (cards.length === 0) return null;
+                return { title, cards };
+            } catch (e) {
+                console.error('V2 decode failed:', e);
                 return null;
             }
         }
 
         /**
-         * Decompresses flashcard data from compressed format
+         * Legacy (v1) compressor kept for reference/compatibility tooling.
+         * Compact JSON structure, URI-encoded, then Base64.
+         */
+        function compressDeckData(title, cards) {
+            try {
+                if (!title || !cards || !Array.isArray(cards)) {
+                    throw new Error('Invalid input data for compression');
+                }
+                const deckData = {
+                    t: title,
+                    c: cards.map(card => {
+                        if (!card || typeof card.question === 'undefined' || typeof card.definition === 'undefined') {
+                            throw new Error('Invalid card structure');
+                        }
+                        return [
+                            card.question || '',
+                            card.definition || '',
+                            card.example || ''
+                        ];
+                    })
+                };
+                const jsonString = JSON.stringify(deckData);
+                if (jsonString.length > 50000) {
+                    throw new Error('Deck data is too large for URL compression');
+                }
+                const uriEncoded = encodeURIComponent(jsonString);
+                const compressed = btoa(uriEncoded);
+                return compressed;
+            } catch (error) {
+                console.error('Compression failed:', error);
+                return null;
+            }
+        }
+
+        /**
+         * Legacy (v1) decompressor — keeps old `?data=` links working.
          */
         function decompressDeckData(compressedData) {
             try {
-                // Base64 decode first
                 const uriEncoded = atob(compressedData);
-                
-                // Then decode URI component to handle Unicode properly
                 const jsonString = decodeURIComponent(uriEncoded);
-                
-                // Parse JSON
                 const deckData = JSON.parse(jsonString);
-                
-                // Convert back to full format
                 const result = {
                     title: deckData.t,
                     cards: deckData.c.map(card => ({
@@ -543,24 +597,41 @@
                 return result;
             } catch (error) {
                 console.error('Decompression failed:', error);
-                console.error('Compressed data:', compressedData);
                 return null;
             }
         }
 
 
         /**
-         * Parses URL parameters to get compressed data, deck key, or legacy card data
-         * Handles compressed data system, localStorage system, and legacy URL-based system
+         * Parses URL parameters to load a deck.
+         * Supports, in priority order:
+         *   1. `?d=`     — v2 LZ-String compressed format (new links)
+         *   2. `?data=`  — v1 Base64-encoded JSON (legacy links keep working)
+         *   3. `?deck=`  — localStorage key (legacy)
+         *   4. `?cards=` / `?title=` — raw legacy format
          */
         function parseUrlDeck() {
             const urlParams = new URLSearchParams(window.location.search);
+            const v2Data = urlParams.get('d');
             const compressedData = urlParams.get('data');
             const deckKey = urlParams.get('deck');
             const cardString = urlParams.get('cards');
             const titleString = urlParams.get('title');
 
-            // New compressed data system (cross-device compatible)
+            // V2 compressed data system
+            if (v2Data) {
+                const deckData = decodeDeckV2(v2Data);
+                if (deckData) {
+                    return { title: deckData.title, cards: deckData.cards, error: null };
+                }
+                return {
+                    title: 'Decompression Error',
+                    cards: [],
+                    error: 'Failed to decompress the flashcard data. The link may be corrupted or truncated.'
+                };
+            }
+
+            // V1 compressed data system (backward compatible)
             if (compressedData) {
                 const deckData = decompressDeckData(compressedData);
                 if (deckData) {
@@ -581,7 +652,6 @@
             // Legacy localStorage-based system (for backward compatibility)
             if (deckKey) {
                 try {
-                    // Try to load from localStorage first
                     const storedData = localStorage.getItem(deckKey);
                     if (storedData) {
                         const deckData = JSON.parse(storedData);
@@ -614,37 +684,35 @@
                 cards: [],
                 error: null
             };
-            
-            // Handle Title
+
             if (titleString) {
                 result.title = decodeURIComponent(titleString).trim() || "Custom URL Flashcards";
             }
 
-            // Handle Cards
             if (cardString) {
                 try {
                     const decodedString = decodeURIComponent(cardString);
-                    
+
                     const parsedCards = decodedString.split(';').map(cardEntry => {
                         let [mainPart, examplePart = ""] = cardEntry.split('|').map(s => s.trim());
                         const parts = mainPart.split(':');
-                        
+
                         if (parts.length >= 2) {
                             const question = parts[0].trim();
-                            const definition = parts.slice(1).join(':').trim(); 
+                            const definition = parts.slice(1).join(':').trim();
                             const example = examplePart || "(Example text not provided)";
 
                             if (question && definition) {
-                                return { 
-                                    question: formatLatinAccents(question), 
-                                    definition: formatLatinAccents(definition), 
-                                    example: formatLatinAccents(example) 
+                                return {
+                                    question: formatLatinAccents(question),
+                                    definition: formatLatinAccents(definition),
+                                    example: formatLatinAccents(example)
                                 };
                             }
                         }
-                        return null; 
+                        return null;
                     }).filter(card => card !== null && card.question && card.definition);
-                    
+
                     if (parsedCards.length > 0) {
                         result.cards = parsedCards;
                     } else {
@@ -669,25 +737,23 @@
             const urlResult = parseUrlDeck();
 
             if (urlResult && urlResult.cards.length > 0) {
-                // Successful URL Load
                 currentDeck = urlResult.cards;
                 deckTitleEl.textContent = urlResult.title;
-                document.title = urlResult.title; // Update browser tab title
+                document.title = urlResult.title;
+                deckSubtitleEl.textContent = `${currentDeck.length} card${currentDeck.length === 1 ? '' : 's'}`;
             } else if (urlResult && urlResult.error) {
-                // URL Error Case (empty, malformed, or missing cards)
                 currentDeck = [{ question: "Error Loading Deck", definition: urlResult.error, example: "Use the Generator below to create a valid link." }];
                 deckTitleEl.textContent = urlResult.title;
-                document.title = urlResult.title; // Update browser tab title
+                document.title = urlResult.title;
+                deckSubtitleEl.textContent = '';
             } else {
-                // Default Deck Case (No valid URL parameters AND no default cards)
                 const defaultTitle = "Create Your First Deck";
-                // Display placeholder card instead of default data
                 currentDeck = [{ question: "Welcome to your Flashcards!", definition: "Use the Generator below to create a shareable deck.", example: "Or load a deck using a URL parameter." }];
                 deckTitleEl.textContent = defaultTitle;
-                document.title = defaultTitle; 
+                document.title = defaultTitle;
+                deckSubtitleEl.textContent = '';
             }
 
-            // Always shuffle (even if the deck has 1 item) and reset index for a fresh start
             shuffle(currentDeck);
             currentCardIndex = 0;
             renderCard();
@@ -702,53 +768,43 @@
             if (currentDeck.length === 0) return;
 
             const card = currentDeck[currentCardIndex];
-            
-            // Update Content with accent formatting
+
             cardFrontText.innerHTML = formatLatinAccents(card.question);
             cardBackDefEl.innerHTML = formatLatinAccents(card.definition);
-            // Set example text, showing a placeholder if empty
             cardBackExEl.innerHTML = formatLatinAccents(card.example || "(No example text provided)");
 
-            // Update Status
-            cardCounterEl.textContent = `Card ${currentCardIndex + 1} / ${currentDeck.length}`;
-            
-            // Update Progress Bar
+            cardCounterEl.textContent = `${currentCardIndex + 1} / ${currentDeck.length}`;
+
             const progress = (currentCardIndex + 1) / currentDeck.length * 100;
             progressBarEl.style.width = `${progress.toFixed(2)}%`;
 
-            // Update Navigation Button States
             prevBtn.disabled = currentCardIndex === 0;
             nextBtn.disabled = currentCardIndex === currentDeck.length - 1;
-            
-            // Reset Flip State
+
             if (isFlipped) {
                 flashcardContainer.classList.remove('flipped');
                 isFlipped = false;
             }
+
+            // Replay the card entrance animation
+            cardInnerEl.classList.remove('card-anim');
+            void cardInnerEl.offsetWidth;
+            cardInnerEl.classList.add('card-anim');
         }
 
-        /**
-         * Toggles the flip state of the card.
-         */
         window.flipCard = function() {
             if (currentDeck.length === 0) return;
             isFlipped = !isFlipped;
             flashcardContainer.classList.toggle('flipped');
         }
 
-        /**
-         * Moves to the next card in the deck.
-         */
         window.nextCard = function() {
             if (currentCardIndex < currentDeck.length - 1) {
                 currentCardIndex++;
                 renderCard();
             }
         }
-        
-        /**
-         * Moves to the previous card in the deck.
-         */
+
         window.prevCard = function() {
             if (currentCardIndex > 0) {
                 currentCardIndex--;
@@ -761,98 +817,142 @@
          */
         window.switchTermDefinition = function() {
             if (currentDeck.length === 0) return;
-            
-            // Swap term and definition for all cards in the deck
+
             currentDeck.forEach(card => {
                 const temp = card.question;
                 card.question = card.definition;
                 card.definition = temp;
             });
-            
-            // Re-render the current card to show the switched content
+
             renderCard();
         }
 
         // --- URL Generator Functions ---
 
         /**
-         * Generates the shareable URL based on the text inputs.
-         * Uses compressed data for cross-device compatibility with significantly reduced URL length.
+         * Parses generator textarea lines into card objects.
          */
-        window.generateLink = function() {
-            const titleInput = document.getElementById('title-input').value.trim();
-            const cardInput = document.getElementById('card-input').value.trim();
-
+        function parseCardInput(cardInput) {
             const rawLines = cardInput.split('\n')
                                      .map(line => line.trim())
-                                     .filter(line => line.includes(':')); // Filter out lines without ':'
-            
-            if (rawLines.length === 0) {
-                linkOutputEl.value = "Error: Please enter valid Term:Definition pairs.";
-                linkOutputContainer.classList.remove('hidden');
-                return;
-            }
+                                     .filter(line => line.includes(':'));
 
-            // Parse cards from input
-            const processedCards = rawLines.map(line => {
+            return rawLines.map(line => {
                 let [mainPart, examplePart = ""] = line.split('|').map(s => s.trim());
                 const parts = mainPart.split(':');
-                
+
                 if (parts.length >= 2) {
                     const question = parts[0].trim();
                     const definition = parts.slice(1).join(':').trim();
-                    const example = examplePart || "(Example text not provided)";
+                    const example = examplePart || "";
 
                     if (question && definition) {
-                        return { 
-                            question: formatLatinAccents(question), 
-                            definition: formatLatinAccents(definition), 
-                            example: formatLatinAccents(example) 
+                        return {
+                            question: formatLatinAccents(question),
+                            definition: formatLatinAccents(definition),
+                            example: formatLatinAccents(example)
                         };
                     }
                 }
                 return null;
             }).filter(c => c !== null);
+        }
+
+        /**
+         * Updates the URL capacity meter under the generated link.
+         */
+        function updateCapacityMeter(urlLength) {
+            const bar = document.getElementById('url-capacity-bar');
+            const lengthLabel = document.getElementById('url-length-label');
+            const capacityLabel = document.getElementById('url-capacity-label');
+
+            const pct = Math.min(100, (urlLength / URL_SAFE_LIMIT) * 100);
+            bar.style.width = `${pct}%`;
+            bar.className = 'h-full transition-all duration-300 ' +
+                (urlLength > URL_SAFE_LIMIT ? 'bg-red-500' : urlLength > URL_SAFE_LIMIT * 0.75 ? 'bg-amber-500' : 'bg-emerald-500');
+
+            lengthLabel.textContent = `URL length: ${urlLength.toLocaleString()} chars`;
+            capacityLabel.textContent = urlLength > URL_SAFE_LIMIT
+                ? 'Long URL — may not paste cleanly in some apps'
+                : `${Math.round(100 - pct)}% capacity remaining`;
+        }
+
+        /**
+         * Generates the shareable URL based on the text inputs using the
+         * v2 LZ-String format (substantially shorter than the v1 Base64 format,
+         * so far more cards fit before hitting browser URL limits).
+         */
+        window.generateLink = function() {
+            const titleInput = document.getElementById('title-input').value.trim();
+            const cardInput = document.getElementById('card-input').value.trim();
+
+            const processedCards = parseCardInput(cardInput);
 
             if (processedCards.length === 0) {
-                linkOutputEl.value = "Error: Please ensure your cards have a Term and Definition separated by a colon.";
+                linkOutputEl.value = "Error: Please enter valid Term:Definition pairs (one per line).";
                 linkOutputContainer.classList.remove('hidden');
                 return;
             }
 
-            // Compress the deck data
-            const compressedData = compressDeckData(titleInput || "My Custom Deck", processedCards);
-            
-            if (!compressedData) {
-                linkOutputEl.value = "Error: Failed to compress deck data. This may be due to special characters or data size.";
+            const title = titleInput || "My Custom Deck";
+            const encoded = encodeDeckV2(title, processedCards);
+
+            if (!encoded) {
+                linkOutputEl.value = "Error: Failed to compress deck data.";
                 linkOutputContainer.classList.remove('hidden');
                 return;
             }
 
-            // Check URL length and provide feedback
-            const newUrl = `${window.location.protocol}//${window.location.host}${window.location.pathname}?data=${compressedData}`;
+            const newUrl = `${window.location.protocol}//${window.location.host}${window.location.pathname}?d=${encoded}`;
             const urlLength = newUrl.length;
 
-            // Construct the URL with compressed data
+            if (urlLength > URL_HARD_LIMIT) {
+                linkOutputEl.value = `Error: Deck is too large even after compression (${urlLength.toLocaleString()} chars). Try splitting it into multiple decks or use Export Deck.`;
+                linkOutputContainer.classList.remove('hidden');
+                updateCapacityMeter(urlLength);
+                return;
+            }
+
             linkOutputEl.value = newUrl;
             linkOutputContainer.classList.remove('hidden');
+            updateCapacityMeter(urlLength);
 
-            // Show compression statistics
-            const originalLength = encodeURIComponent(JSON.stringify({
-                title: titleInput || "My Custom Deck",
-                cards: processedCards
-            })).length;
-            
-            const compressionRatio = Math.round((1 - urlLength / originalLength) * 100);
-            
-            // Update the copy message to show compression info
+            // Show compression statistics vs the old v1 encoding
+            const legacyEncoded = compressDeckData(title, processedCards.map(c => ({
+                question: c.question, definition: c.definition, example: c.example || '(Example text not provided)'
+            })));
             const copyMessage = document.getElementById('copy-message');
-            copyMessage.textContent = `Link generated! ${compressionRatio}% size reduction (${urlLength} chars vs ${originalLength} chars)`;
+            if (legacyEncoded) {
+                const savings = Math.round((1 - encoded.length / legacyEncoded.length) * 100);
+                copyMessage.textContent = `Link generated! ${processedCards.length} cards, ${savings}% shorter than the previous format.`;
+            } else {
+                copyMessage.textContent = `Link generated! ${processedCards.length} cards.`;
+            }
             copyMessage.classList.remove('opacity-0');
             setTimeout(() => copyMessage.classList.add('opacity-0'), 5000);
 
             // Reload the new deck into the app preview
-            initializeDeck();
+            currentDeck = processedCards.map(c => ({ ...c }));
+            deckTitleEl.textContent = title;
+            document.title = title;
+            deckSubtitleEl.textContent = `${currentDeck.length} card${currentDeck.length === 1 ? '' : 's'}`;
+            shuffle(currentDeck);
+            currentCardIndex = 0;
+            renderCard();
+        }
+
+        /**
+         * Live stats under the generator textarea.
+         */
+        function updateInputStats() {
+            const statsEl = document.getElementById('input-stats');
+            const cardInput = document.getElementById('card-input').value.trim();
+            if (!cardInput) {
+                statsEl.textContent = '';
+                return;
+            }
+            const cards = parseCardInput(cardInput);
+            statsEl.textContent = `${cards.length} valid card${cards.length === 1 ? '' : 's'} detected`;
         }
 
         /**
@@ -861,15 +961,15 @@
         window.copyLink = function() {
             linkOutputEl.select();
             try {
-                // document.execCommand('copy') is used as navigator.clipboard might be restricted in iframes
                 const successful = document.execCommand('copy');
                 if (successful) {
+                    copyMessageEl.textContent = 'Link copied!';
                     copyMessageEl.classList.remove('opacity-0');
                     setTimeout(() => copyMessageEl.classList.add('opacity-0'), 2000);
                 }
             } catch (err) {
                 console.error('Copy failed:', err);
-                linkOutputEl.setSelectionRange(0, 99999); 
+                linkOutputEl.setSelectionRange(0, 99999);
             }
         }
 
@@ -891,7 +991,7 @@
 
             const dataStr = JSON.stringify(deckData, null, 2);
             const dataBlob = new Blob([dataStr], {type: 'application/json'});
-            
+
             const link = document.createElement('a');
             link.href = URL.createObjectURL(dataBlob);
             link.download = `flashcards_${deckData.title.replace(/[^a-zA-Z0-9]/g, '_')}.json`;
@@ -907,29 +1007,30 @@
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = '.json';
-            
+
             input.onchange = function(event) {
                 const file = event.target.files[0];
                 if (!file) return;
-                
+
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     try {
                         const deckData = JSON.parse(e.target.result);
-                        
+
                         if (!deckData.title || !deckData.cards || !Array.isArray(deckData.cards)) {
                             alert('Invalid deck file format!');
                             return;
                         }
-                        
+
                         currentDeck = deckData.cards;
                         deckTitleEl.textContent = deckData.title;
                         document.title = deckData.title;
-                        
+                        deckSubtitleEl.textContent = `${currentDeck.length} card${currentDeck.length === 1 ? '' : 's'}`;
+
                         currentCardIndex = 0;
                         shuffle(currentDeck);
                         renderCard();
-                        
+
                         alert(`Successfully imported "${deckData.title}" with ${deckData.cards.length} cards!`);
                     } catch (error) {
                         alert('Error reading deck file: ' + error.message);
@@ -937,7 +1038,7 @@
                 };
                 reader.readAsText(file);
             };
-            
+
             input.click();
         }
 
@@ -953,7 +1054,7 @@
                         keysToRemove.push(key);
                     }
                 }
-                
+
                 keysToRemove.forEach(key => localStorage.removeItem(key));
                 alert(`Cleared ${keysToRemove.length} stored decks.`);
             }
@@ -965,7 +1066,7 @@
             // 1. Initialize Theme
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             const storedTheme = localStorage.getItem('theme');
-            
+
             if (storedTheme === 'dark' || (!storedTheme && prefersDark)) {
                 applyTheme(true);
             } else {
@@ -975,21 +1076,21 @@
             // 2. Initialize Deck
             initializeDeck();
 
-            // 3. Attach event listener for theme toggle
+            // 3. Attach event listeners
             document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
-            
+            document.getElementById('card-input').addEventListener('input', updateInputStats);
+
             // 4. Keyboard shortcuts for quick studying
             document.addEventListener('keydown', (e) => {
-                // Ensure keypresses only affect card if input fields aren't focused
                 if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
                     return;
                 }
-                
+
                 if (e.key === 'ArrowRight') nextCard();
                 else if (e.key === 'ArrowLeft') prevCard();
-                else if (e.key === 's' || e.key === 'S') shuffleDeckAndRender(); // Added keyboard shortcut for shuffle
+                else if (e.key === 's' || e.key === 'S') shuffleDeckAndRender();
                 else if (e.key === ' ' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-                    e.preventDefault(); // Prevent spacebar from scrolling
+                    e.preventDefault();
                     flipCard();
                 }
             });
