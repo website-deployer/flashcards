@@ -16,6 +16,9 @@
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
                     },
+                    colors: {
+                        'surface-container-lowest': '#fefcfa',
+                    },
                 }
             }
         }
@@ -28,11 +31,12 @@
         body {
             font-family: 'Inter', sans-serif;
             transition: background-color 0.3s, color 0.3s;
+            position: relative;
         }
 
         /* --- Warm editorial surfaces --- */
         .app-bg {
-            background-color: #F7F4ED;
+            background-color: #f9f7f2;
         }
         .dark .app-bg {
             background-color: #1A1816;
@@ -50,22 +54,22 @@
         .glass-strong {
             background: #FDFCF9;
             border: 1px solid #DDD6CC;
-            box-shadow: 0 1px 3px rgba(31, 27, 23, 0.04), 0 1px 2px rgba(31, 27, 23, 0.03);
+            box-shadow: 0 2px 8px rgba(31, 27, 23, 0.06), 0 1px 2px rgba(31, 27, 23, 0.04);
         }
         .dark .glass-strong {
             background: #252220;
             border: 1px solid #353230;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
         .glass-tint {
             background: #FAF7F2;
             border: 1px solid #E2D9CC;
-            box-shadow: 0 1px 3px rgba(31, 27, 23, 0.03);
+            box-shadow: 0 2px 8px rgba(31, 27, 23, 0.05), 0 1px 2px rgba(31, 27, 23, 0.03);
         }
         .dark .glass-tint {
             background: #2E2B28;
             border: 1px solid #3A3530;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
 
         /* Card face overrides */
@@ -88,17 +92,22 @@
 
         /* 3D Flip Animation */
         .card-container {
-            perspective: 1200px;
+            perspective: 1400px;
         }
         .card-inner {
             position: relative;
             width: 100%;
             height: 100%;
-            transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
             transform-style: preserve-3d;
+            will-change: transform;
         }
         .card-container.flipped .card-inner {
             transform: rotateY(180deg);
+        }
+        /* Lift effect on flip */
+        .card-container.flipped {
+            filter: drop-shadow(0 8px 24px rgba(31, 27, 23, 0.08));
         }
         .card-front, .card-back {
             position: absolute;
@@ -154,13 +163,27 @@
             }
         }
 
-        /* Subtle slide-in when changing cards */
-        @keyframes cardIn {
-            from { opacity: 0; transform: translateY(6px); }
+        /* Card entrance animations */
+        @keyframes cardFadeUp {
+            from { opacity: 0; transform: translateY(8px); }
             to   { opacity: 1; transform: translateY(0); }
         }
+        @keyframes slideFromRight {
+            from { opacity: 0; transform: translateX(40px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideFromLeft {
+            from { opacity: 0; transform: translateX(-40px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
         .card-anim {
-            animation: cardIn 0.25s ease-out;
+            animation: cardFadeUp 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .card-slide-right {
+            animation: slideFromRight 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .card-slide-left {
+            animation: slideFromLeft 0.35s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
         /* Keyboard hint chips */
@@ -234,87 +257,138 @@
             font-size: 1.5rem;
         }
 
-        /* --- Decorative background: crafty grid + lines + warm glow --- */
+        /* --- Decorative background: paper grain, warm glow, floating editorial shapes --- */
         .bg-decoration {
             position: fixed;
             inset: 0;
             overflow: hidden;
             pointer-events: none;
+            z-index: 0;
         }
 
-        .bg-decoration > div {
+        /* SVG paper grain overlay */
+        .bg-decoration::before {
+            content: '';
             position: absolute;
             inset: 0;
+            opacity: 0.015;
+            mix-blend-mode: soft-light;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+            background-repeat: repeat;
+            background-size: 200px 200px;
+            z-index: 2;
         }
 
-        /* Layer 1: Warm bottom glow that slowly pulses */
-        .bg-glow-layer {
-            background: radial-gradient(ellipse at 50% 100%, rgba(217, 119, 87, 0.06) 0%, transparent 60%);
-            animation: glowPulse 12s ease-in-out infinite;
+        /* Warm ambient glow (desk-lamp effect) */
+        .bg-decoration::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 25%, rgba(217, 119, 87, 0.04) 0%, transparent 55%);
+            z-index: 1;
         }
-        .dark .bg-glow-layer {
-            background: radial-gradient(ellipse at 50% 100%, rgba(217, 119, 87, 0.08) 0%, transparent 60%);
-        }
-
-        /* Layer 2: Vertical grid lines */
-        .bg-grid-v {
-            background-image: linear-gradient(to right, rgba(217, 119, 87, 0.04) 0px, transparent 1px);
-            background-size: 40px 100%;
-            animation: gridDriftV 45s linear infinite;
-        }
-        .dark .bg-grid-v {
-            background-image: linear-gradient(to right, rgba(217, 119, 87, 0.06) 0px, transparent 1px);
+        .dark .bg-decoration::after {
+            background: radial-gradient(ellipse at 50% 25%, rgba(217, 119, 87, 0.06) 0%, transparent 55%);
         }
 
-        /* Layer 3: Horizontal grid lines */
-        .bg-grid-h {
-            background-image: linear-gradient(to bottom, rgba(217, 119, 87, 0.04) 0px, transparent 1px);
-            background-size: 100% 40px;
-            animation: gridDriftH 55s linear infinite;
+        /* Floating editorial shapes */
+        .bg-shape {
+            position: absolute;
+            pointer-events: none;
+            will-change: transform;
         }
-        .dark .bg-grid-h {
-            background-image: linear-gradient(to bottom, rgba(217, 119, 87, 0.06) 0px, transparent 1px);
+        .bg-shape-circle {
+            border-radius: 50%;
+            filter: blur(40px);
+        }
+        .bg-shape-square {
+            border-radius: 20px;
+            filter: blur(20px);
+        }
+        .bg-shape-dotted-line {
+            position: absolute;
+            pointer-events: none;
+            width: 2px;
+            height: 160px;
+            background: repeating-linear-gradient(
+                to bottom,
+                rgba(217, 119, 87, 0.08) 0px,
+                rgba(217, 119, 87, 0.08) 4px,
+                transparent 4px,
+                transparent 12px
+            );
+            will-change: transform;
+        }
+        .bg-dot {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: rgba(217, 119, 87, 0.06);
+            pointer-events: none;
+            will-change: transform;
         }
 
-        /* Layer 4: Dots at grid intersections */
-        .bg-dots {
-            background-image: radial-gradient(circle at 0 0, rgba(217, 119, 87, 0.05) 1px, transparent 1px);
-            background-size: 40px 40px;
-            animation: dotDrift 35s linear infinite;
+        /* Slow ambient animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
         }
-        .dark .bg-dots {
-            background-image: radial-gradient(circle at 0 0, rgba(217, 119, 87, 0.08) 1px, transparent 1px);
+        @keyframes drift {
+            0%, 100% { transform: translateX(0px); }
+            50% { transform: translateX(10px); }
+        }
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
         }
 
-        @keyframes glowPulse {
-            0%, 100% { opacity: 0.6; }
-            50% { opacity: 1; }
-        }
-        @keyframes gridDriftV {
-            0% { background-position: 0 0; }
-            100% { background-position: 40px 0; }
-        }
-        @keyframes gridDriftH {
-            0% { background-position: 0 0; }
-            100% { background-position: 0 40px; }
-        }
-        @keyframes dotDrift {
-            0% { background-position: 0 0; }
-            100% { background-position: 40px 40px; }
+        .shape-1 { animation: float 22s ease-in-out infinite; }
+        .shape-2 { animation: drift 35s ease-in-out infinite; }
+        .shape-3 { animation: breathe 28s ease-in-out infinite; }
+        .shape-4 { animation: float 26s ease-in-out infinite, drift 32s ease-in-out infinite; }
+        .shape-5 { animation: drift 25s ease-in-out infinite; }
+        .shape-6 { animation: breathe 30s ease-in-out infinite; }
+        .shape-7 { animation: float 18s ease-in-out infinite; }
+        .shape-8 { animation: drift 20s ease-in-out infinite; }
+        .shape-9 { animation: float 24s ease-in-out infinite, drift 28s ease-in-out infinite; }
+        .shape-10 { animation: breathe 22s ease-in-out infinite; }
+        .shape-11 { animation: float 20s ease-in-out infinite; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .shape-1, .shape-2, .shape-3, .shape-4, .shape-5,
+            .shape-6, .shape-7, .shape-8, .shape-9, .shape-10, .shape-11 {
+                animation: none;
+            }
+            .bg-decoration::before,
+            .bg-decoration::after {
+                animation: none;
+            }
         }
     </style>
 </head>
 <body class="app-bg flex items-center justify-center min-h-screen p-6">
 
-    <!-- Decorative background: crafty grid + lines + warm glow -->
+    <!-- Decorative background: paper grain, warm glow, floating editorial shapes -->
     <div class="bg-decoration" aria-hidden="true">
-        <div class="bg-glow-layer"></div>
-        <div class="bg-grid-v"></div>
-        <div class="bg-grid-h"></div>
-        <div class="bg-dots"></div>
+        <!-- Blurred circles -->
+        <div class="bg-shape bg-shape-circle shape-1" style="width:320px;height:320px;top:8%;left:-6%;background:rgba(217,119,87,0.04)"></div>
+        <div class="bg-shape bg-shape-circle shape-2" style="width:220px;height:220px;top:55%;right:-4%;background:rgba(217,119,87,0.03)"></div>
+        <div class="bg-shape bg-shape-circle shape-3" style="width:260px;height:260px;bottom:3%;left:28%;background:rgba(163,155,147,0.04)"></div>
+        <!-- Soft squares -->
+        <div class="bg-shape bg-shape-square shape-4" style="width:130px;height:130px;top:22%;right:12%;background:rgba(249,247,242,0.06)"></div>
+        <div class="bg-shape bg-shape-square shape-5" style="width:90px;height:90px;top:42%;left:8%;background:rgba(217,119,87,0.04)"></div>
+        <!-- Vertical dotted line -->
+        <div class="bg-shape-dotted-line shape-6" style="top:12%;right:6%"></div>
+        <!-- Small drifting dots -->
+        <div class="bg-dot shape-7" style="top:18%;left:18%"></div>
+        <div class="bg-dot shape-8" style="top:32%;left:82%"></div>
+        <div class="bg-dot shape-9" style="top:52%;left:12%"></div>
+        <div class="bg-dot shape-10" style="top:68%;left:78%"></div>
+        <div class="bg-dot shape-11" style="top:82%;left:42%"></div>
     </div>
 
-    <div class="w-full max-w-2xl mx-auto">
+    <div class="w-full max-w-2xl mx-auto relative z-[1]">
 
         <!-- Header -->
         <header class="text-center mb-6">
@@ -942,7 +1016,7 @@
         /**
          * Renders the current card's content and updates navigation state and progress.
          */
-        function renderCard() {
+        function renderCard(slideDirection) {
             if (currentDeck.length === 0) return;
 
             const card = currentDeck[currentCardIndex];
@@ -964,10 +1038,16 @@
                 isFlipped = false;
             }
 
-            // Replay the card entrance animation
-            cardInnerEl.classList.remove('card-anim');
+            // Replay the card entrance animation with direction
+            cardInnerEl.classList.remove('card-anim', 'card-slide-right', 'card-slide-left');
             void cardInnerEl.offsetWidth;
-            cardInnerEl.classList.add('card-anim');
+            if (slideDirection === 'next') {
+                cardInnerEl.classList.add('card-slide-right');
+            } else if (slideDirection === 'prev') {
+                cardInnerEl.classList.add('card-slide-left');
+            } else {
+                cardInnerEl.classList.add('card-anim');
+            }
         }
 
         window.flipCard = function() {
@@ -979,14 +1059,14 @@
         window.nextCard = function() {
             if (currentCardIndex < currentDeck.length - 1) {
                 currentCardIndex++;
-                renderCard();
+                renderCard('next');
             }
         }
 
         window.prevCard = function() {
             if (currentCardIndex > 0) {
                 currentCardIndex--;
-                renderCard();
+                renderCard('prev');
             }
         }
 
