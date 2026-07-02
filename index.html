@@ -233,9 +233,86 @@
         #flashcard-container:-ms-full-screen .card-content-back-ex {
             font-size: 1.5rem;
         }
+
+        /* --- Decorative background: crafty grid + lines + warm glow --- */
+        .bg-decoration {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .bg-decoration > div {
+            position: absolute;
+            inset: 0;
+        }
+
+        /* Layer 1: Warm bottom glow that slowly pulses */
+        .bg-glow-layer {
+            background: radial-gradient(ellipse at 50% 100%, rgba(217, 119, 87, 0.06) 0%, transparent 60%);
+            animation: glowPulse 12s ease-in-out infinite;
+        }
+        .dark .bg-glow-layer {
+            background: radial-gradient(ellipse at 50% 100%, rgba(217, 119, 87, 0.08) 0%, transparent 60%);
+        }
+
+        /* Layer 2: Vertical grid lines */
+        .bg-grid-v {
+            background-image: linear-gradient(to right, rgba(217, 119, 87, 0.04) 0px, transparent 1px);
+            background-size: 40px 100%;
+            animation: gridDriftV 45s linear infinite;
+        }
+        .dark .bg-grid-v {
+            background-image: linear-gradient(to right, rgba(217, 119, 87, 0.06) 0px, transparent 1px);
+        }
+
+        /* Layer 3: Horizontal grid lines */
+        .bg-grid-h {
+            background-image: linear-gradient(to bottom, rgba(217, 119, 87, 0.04) 0px, transparent 1px);
+            background-size: 100% 40px;
+            animation: gridDriftH 55s linear infinite;
+        }
+        .dark .bg-grid-h {
+            background-image: linear-gradient(to bottom, rgba(217, 119, 87, 0.06) 0px, transparent 1px);
+        }
+
+        /* Layer 4: Dots at grid intersections */
+        .bg-dots {
+            background-image: radial-gradient(circle at 0 0, rgba(217, 119, 87, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+            animation: dotDrift 35s linear infinite;
+        }
+        .dark .bg-dots {
+            background-image: radial-gradient(circle at 0 0, rgba(217, 119, 87, 0.08) 1px, transparent 1px);
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+        @keyframes gridDriftV {
+            0% { background-position: 0 0; }
+            100% { background-position: 40px 0; }
+        }
+        @keyframes gridDriftH {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 40px; }
+        }
+        @keyframes dotDrift {
+            0% { background-position: 0 0; }
+            100% { background-position: 40px 40px; }
+        }
     </style>
 </head>
 <body class="app-bg flex items-center justify-center min-h-screen p-6">
+
+    <!-- Decorative background: crafty grid + lines + warm glow -->
+    <div class="bg-decoration" aria-hidden="true">
+        <div class="bg-glow-layer"></div>
+        <div class="bg-grid-v"></div>
+        <div class="bg-grid-h"></div>
+        <div class="bg-dots"></div>
+    </div>
 
     <div class="w-full max-w-2xl mx-auto">
 
@@ -296,8 +373,8 @@
                     </button>
                     <div class="flex items-center gap-1.5 ml-2 pl-3 border-l border-[#DDD6CC] dark:border-[#353230]">
                     <!-- Shuffle Button -->
-                    <button id="shuffle-btn" onclick="shuffleDeckAndRender()" title="Shuffle OFF — click to turn ON (S)" class="p-2 bg-[#D97757] text-white rounded-lg shadow-sm hover:bg-[#C0684A] transition duration-150 ease-in-out">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <button id="shuffle-btn" onclick="shuffleDeckAndRender()" title="Shuffle OFF — click to shuffle (S)" class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[#DDD6CC] dark:border-[#353230] bg-[#FDFCF9] dark:bg-[#252220] text-[#D97757] dark:text-[#D97757] rounded-lg shadow-sm hover:bg-[#FAF7F2] dark:hover:bg-[#2E2B28] transition duration-150 ease-in-out text-sm font-semibold">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="16 3 21 3 21 8"/>
                             <line x1="4" y1="20" x2="21" y2="3"/>
                             <polyline points="21 16 21 21 16 21"/>
@@ -305,6 +382,7 @@
                             <line x1="14" y1="12" x2="15" y2="13"/>
                             <line x1="8" y1="8" x2="9" y2="9"/>
                         </svg>
+                        <span>Shuffle</span>
                     </button>
                     <!-- Theme Toggle Button -->
                     <button id="theme-toggle" title="Toggle Dark/Light Mode" class="p-2 bg-[#FDFCF9] dark:bg-[#252220] text-[#6B625A] dark:text-[#9C958E] rounded-lg border border-[#DDD6CC] dark:border-[#353230] shadow-sm hover:bg-[#FAF7F2] dark:hover:bg-[#2E2B28] transition duration-150 ease-in-out">
@@ -504,12 +582,10 @@
             const btn = document.getElementById('shuffle-btn');
             if (!btn) return;
             if (shuffleEnabled) {
-                btn.classList.remove('bg-[#D97757]', 'hover:bg-[#C0684A]');
-                btn.classList.add('bg-[#B85C3E]', 'hover:bg-[#A34D32]');
+                btn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#D97757] text-white rounded-lg shadow-sm hover:bg-[#C0684A] transition duration-150 ease-in-out text-sm font-semibold';
                 btn.title = 'Shuffle ON — click to turn OFF (S)';
             } else {
-                btn.classList.remove('bg-[#B85C3E]', 'hover:bg-[#A34D32]');
-                btn.classList.add('bg-[#D97757]', 'hover:bg-[#C0684A]');
+                btn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 border border-[#DDD6CC] dark:border-[#353230] bg-[#FDFCF9] dark:bg-[#252220] text-[#D97757] dark:text-[#D97757] rounded-lg shadow-sm hover:bg-[#FAF7F2] dark:hover:bg-[#2E2B28] transition duration-150 ease-in-out text-sm font-semibold';
                 btn.title = 'Shuffle OFF — click to shuffle (S)';
             }
         }
