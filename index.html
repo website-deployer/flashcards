@@ -311,8 +311,8 @@
         .bg-shape-square {
             border-radius: 16px;
         }
-        .bg-shape-triangle {
-            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+        .bg-shape-diamond {
+            rotate: 45deg;
         }
 
         /* Slow ambient animations */
@@ -1319,15 +1319,15 @@
             var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
             var colors = getThemeColors();
 
-            var shapes = ['bg-shape-circle', 'bg-shape-square', 'bg-shape-triangle'];
+            var shapes = ['bg-shape-circle', 'bg-shape-square', 'bg-shape-diamond'];
             var anims = ['float', 'drift', 'breathe', 'sway'];
 
-            // Mix of corner + near-center positions
+            // Edge-only positions — content zone (~15-75% both axes) stays clear
             var slots = [
-                { top: 4, left: 4 }, { top: 4, left: 78 },
-                { top: 78, left: 4 }, { top: 78, left: 78 },
-                { top: 15, left: 35 }, { top: 65, left: 35 },
-                { top: 20, left: 55 }, { top: 55, left: 55 },
+                { top: 3, left: 5 }, { top: 3, left: 40 }, { top: 3, left: 72 },
+                { top: 80, left: 5 }, { top: 80, left: 40 }, { top: 80, left: 72 },
+                { top: 22, left: 2 }, { top: 55, left: 2 },
+                { top: 22, left: 82 }, { top: 55, left: 82 },
             ];
             shuffleArray(slots);
 
