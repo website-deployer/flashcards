@@ -30,128 +30,42 @@
             transition: background-color 0.3s, color 0.3s;
         }
 
-        /* Animated color blobs in the background (gives the glass surfaces something to blur) */
+        /* --- Warm editorial surfaces --- */
         .app-bg {
-            background-color: #f5f5f7;
+            background-color: #F7F4ED;
         }
         .dark .app-bg {
-            background-color: #16162a;
+            background-color: #1A1816;
         }
-
-        /* Floating blob elements */
-        .bg-blobs {
-            position: fixed;
-            inset: 0;
-            overflow: hidden;
-            pointer-events: none;
-            z-index: -1;
-        }
-        .blob {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            will-change: transform;
-        }
-        .blob-1 {
-            width: 900px; height: 500px;
-            left: 5%; top: -10%;
-            background: radial-gradient(ellipse, rgba(99, 102, 241, 0.35), transparent 60%);
-            animation: float1 22s ease-in-out infinite;
-        }
-        .blob-2 {
-            width: 800px; height: 480px;
-            right: 3%; top: 5%;
-            background: radial-gradient(ellipse, rgba(56, 189, 248, 0.28), transparent 60%);
-            animation: float2 28s ease-in-out infinite;
-        }
-        .blob-3 {
-            width: 900px; height: 520px;
-            right: 5%; bottom: -5%;
-            background: radial-gradient(ellipse, rgba(168, 85, 247, 0.30), transparent 60%);
-            animation: float3 25s ease-in-out infinite;
-        }
-        .blob-4 {
-            width: 700px; height: 420px;
-            left: 0%; bottom: 0%;
-            background: radial-gradient(ellipse, rgba(244, 114, 182, 0.22), transparent 60%);
-            animation: float4 30s ease-in-out infinite;
-        }
-        .dark .blob-1 {
-            background: radial-gradient(ellipse, rgba(99, 102, 241, 0.32), transparent 60%);
-        }
-        .dark .blob-2 {
-            background: radial-gradient(ellipse, rgba(34, 211, 238, 0.16), transparent 60%);
-        }
-        .dark .blob-3 {
-            background: radial-gradient(ellipse, rgba(168, 85, 247, 0.26), transparent 60%);
-        }
-        .dark .blob-4 {
-            background: radial-gradient(ellipse, rgba(236, 72, 153, 0.14), transparent 60%);
-        }
-
-        @keyframes float1 {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            25% { transform: translate(6vw, 8vh) scale(1.08); }
-            50% { transform: translate(-3vw, 4vh) scale(0.95); }
-            75% { transform: translate(8vw, -6vh) scale(1.05); }
-        }
-        @keyframes float2 {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            25% { transform: translate(-5vw, 6vh) scale(0.92); }
-            50% { transform: translate(7vw, -4vh) scale(1.06); }
-            75% { transform: translate(-4vw, 8vh) scale(1.02); }
-        }
-        @keyframes float3 {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            25% { transform: translate(4vw, -7vh) scale(1.05); }
-            50% { transform: translate(-8vw, 5vh) scale(0.93); }
-            75% { transform: translate(6vw, 4vh) scale(1.07); }
-        }
-        @keyframes float4 {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            25% { transform: translate(-7vw, -5vh) scale(1.07); }
-            50% { transform: translate(5vw, 8vh) scale(0.94); }
-            75% { transform: translate(-6vw, -3vh) scale(1.03); }
-        }
-
-        /* --- Claude-style clean surfaces --- */
         .glass {
-            background: #ffffff;
-            border: 1px solid rgba(0, 0, 0, 0.06);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
+            background: #FDFCF9;
+            border: 1px solid #DDD6CC;
+            box-shadow: 0 1px 3px rgba(31, 27, 23, 0.04), 0 1px 2px rgba(31, 27, 23, 0.03);
         }
         .dark .glass {
-            background: #2a2a3e;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            background: #252220;
+            border: 1px solid #353230;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
         }
         .glass-strong {
-            background: #ffffff;
-            border: 1px solid rgba(0, 0, 0, 0.06);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
+            background: #FDFCF9;
+            border: 1px solid #DDD6CC;
+            box-shadow: 0 1px 3px rgba(31, 27, 23, 0.04), 0 1px 2px rgba(31, 27, 23, 0.03);
         }
         .dark .glass-strong {
-            background: #2a2a3e;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            background: #252220;
+            border: 1px solid #353230;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
         }
         .glass-tint {
-            background: #f8f7ff;
-            border: 1px solid rgba(99, 102, 241, 0.12);
-            box-shadow: 0 1px 3px rgba(79, 70, 229, 0.05);
+            background: #FAF7F2;
+            border: 1px solid #E2D9CC;
+            box-shadow: 0 1px 3px rgba(31, 27, 23, 0.03);
         }
         .dark .glass-tint {
-            background: #2e2d48;
-            border: 1px solid rgba(129, 140, 248, 0.12);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-        }
-        .glass-input {
-            background: #ffffff;
-            border: 1px solid rgba(0, 0, 0, 0.08);
-        }
-        .dark .glass-input {
-            background: #222236;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: #2E2B28;
+            border: 1px solid #3A3530;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
         }
 
         /* Card face overrides */
@@ -160,16 +74,16 @@
             backdrop-filter: none !important;
         }
         .card-front.glass-strong {
-            background: #ffffff;
+            background: #FDFCF9;
         }
         .dark .card-front.glass-strong {
-            background: #2a2a3e;
+            background: #252220;
         }
         .card-back.glass-tint {
-            background: #f8f7ff;
+            background: #FAF7F2;
         }
         .dark .card-back.glass-tint {
-            background: #2e2d48;
+            background: #2E2B28;
         }
 
         /* 3D Flip Animation */
@@ -254,18 +168,18 @@
             display: inline-block;
             padding: 0.1rem 0.45rem;
             border-radius: 0.375rem;
-            border: 1px solid rgba(0, 0, 0, 0.08);
+            border: 1px solid #DDD6CC;
             border-bottom-width: 2px;
             font-size: 0.7rem;
             font-weight: 600;
             line-height: 1.2;
-            background: #ffffff;
-            color: #6b7280;
+            background: #FDFCF9;
+            color: #6B625A;
         }
         .dark .kbd {
-            background: #2a2a3e;
-            border-color: rgba(255, 255, 255, 0.08);
-            color: #9ca3af;
+            background: #252220;
+            border-color: #353230;
+            color: #8C847C;
         }
 
         /* --- Fullscreen Styles --- */
@@ -321,30 +235,23 @@
         }
     </style>
 </head>
-<body class="app-bg flex items-center justify-center min-h-screen p-4">
-
-    <div class="bg-blobs" aria-hidden="true">
-        <div class="blob blob-1"></div>
-        <div class="blob blob-2"></div>
-        <div class="blob blob-3"></div>
-        <div class="blob blob-4"></div>
-    </div>
+<body class="app-bg flex items-center justify-center min-h-screen p-6">
 
     <div class="w-full max-w-2xl mx-auto">
 
         <!-- Header -->
         <header class="text-center mb-6">
-            <h1 id="deck-title" class="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Flashcard Deck</h1>
-            <p id="deck-subtitle" class="mt-1 text-sm text-gray-500 dark:text-gray-400"></p>
+            <h1 id="deck-title" class="text-3xl md:text-4xl font-bold tracking-tight text-[#1F1B17] dark:text-[#E8E4DE]">Flashcard Deck</h1>
+            <p id="deck-subtitle" class="mt-1 text-sm text-[#6B625A] dark:text-[#8C847C]"></p>
         </header>
 
         <main>
             <!-- Progress Bar -->
             <div class="flex items-center gap-3 mb-6">
-                <div class="flex-grow h-2 rounded-full overflow-hidden bg-[rgba(0,0,0,0.06)] dark:bg-[rgba(255,255,255,0.06)]">
-                    <div id="progress-bar" class="h-full bg-indigo-500 transition-all duration-300 ease-in-out" style="width: 0%;"></div>
+                <div class="flex-grow h-2 rounded-full overflow-hidden bg-[#E2D9CC] dark:bg-[#353230]">
+                    <div id="progress-bar" class="h-full bg-[#D97757] transition-all duration-300 ease-in-out" style="width: 0%;"></div>
                 </div>
-                <div id="card-counter" class="text-xs font-semibold text-gray-500 dark:text-gray-400 px-2.5 py-1 whitespace-nowrap">
+                <div id="card-counter" class="text-xs font-semibold text-[#6B625A] dark:text-[#8C847C] px-2.5 py-1 whitespace-nowrap">
                     0 / 0
                 </div>
             </div>
@@ -354,14 +261,14 @@
                 <div id="card-inner" class="card-inner">
                     <!-- Front of Card (Question / Root) -->
                     <div id="card-front" class="card-front glass-strong">
-                        <p class="card-content-front text-gray-900 dark:text-gray-100"></p>
-                        <span class="card-hint text-gray-400 dark:text-gray-500">Tap or press Space to flip</span>
+                        <p class="card-content-front text-[#1F1B17] dark:text-[#E8E4DE]"></p>
+                        <span class="card-hint text-[#A39B93] dark:text-[#6B625A]">Tap or press Space to flip</span>
                     </div>
                     <!-- Back of Card (Answer / Definition + Example) -->
                     <div id="card-back" class="card-back glass-tint">
-                        <div class="text-gray-800 dark:text-gray-100 p-4">
-                           <p id="back-definition" class="card-content-back-def text-gray-800 dark:text-gray-100 mb-2"></p>
-                           <p id="back-example" class="card-content-back-ex text-gray-600 dark:text-gray-300 italic"></p>
+                        <div class="text-[#1F1B17] dark:text-[#E8E4DE] p-4">
+                           <p id="back-definition" class="card-content-back-def text-[#1F1B17] dark:text-[#E8E4DE] mb-2"></p>
+                           <p id="back-example" class="card-content-back-ex text-[#6B625A] dark:text-[#9C958E] italic"></p>
                         </div>
                     </div>
                 </div>
@@ -371,25 +278,25 @@
             <div class="glass p-3 rounded-2xl mb-4 max-w-fit mx-auto">
                 <!-- Top Row: Navigation -->
                 <div class="flex items-center justify-center gap-2 mb-2">
-                    <button id="prev-btn" onclick="prevCard()" class="px-4 py-2 bg-white dark:bg-[#2a2a3e] text-gray-700 dark:text-gray-200 font-semibold rounded-xl border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)] shadow-sm hover:bg-gray-50 dark:hover:bg-[#353550] transition duration-150 ease-in-out disabled:opacity-40 disabled:cursor-not-allowed">
+                    <button id="prev-btn" onclick="prevCard()" class="px-4 py-2 bg-[#FDFCF9] dark:bg-[#252220] text-[#1F1B17] dark:text-[#E8E4DE] font-semibold rounded-xl border border-[#DDD6CC] dark:border-[#353230] shadow-sm hover:bg-[#FAF7F2] dark:hover:bg-[#2E2B28] transition duration-150 ease-in-out disabled:opacity-40 disabled:cursor-not-allowed">
                         &larr; Previous
                     </button>
-                    <button id="flip-button" onclick="flipCard()" class="px-5 py-2 bg-indigo-500 text-white font-semibold rounded-xl shadow-sm hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-all duration-150">
+                    <button id="flip-button" onclick="flipCard()" class="px-5 py-2 bg-[#D97757] text-white font-semibold rounded-xl shadow-sm hover:bg-[#C0684A] focus:outline-none focus:ring-2 focus:ring-[#D97757]/40 transition-all duration-150">
                         Flip
                     </button>
-                    <button id="next-btn" onclick="nextCard()" class="px-4 py-2 bg-indigo-500 text-white font-semibold rounded-xl shadow-sm hover:bg-indigo-600 transition duration-150 ease-in-out disabled:opacity-40 disabled:cursor-not-allowed">
+                    <button id="next-btn" onclick="nextCard()" class="px-4 py-2 bg-[#D97757] text-white font-semibold rounded-xl shadow-sm hover:bg-[#C0684A] transition duration-150 ease-in-out disabled:opacity-40 disabled:cursor-not-allowed">
                         Next &rarr;
                     </button>
                 </div>
 
                 <!-- Bottom Row: Actions -->
                 <div class="flex items-center justify-center gap-2">
-                    <button id="switch-button" onclick="switchTermDefinition()" class="px-3 py-1.5 bg-purple-500 text-white font-semibold rounded-lg shadow-sm hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-300 transition-all duration-150 text-sm">
+                    <button id="switch-button" onclick="switchTermDefinition()" class="px-3 py-1.5 bg-[#D97757] text-white font-semibold rounded-lg shadow-sm hover:bg-[#C0684A] focus:outline-none focus:ring-2 focus:ring-[#D97757]/40 transition-all duration-150 text-sm">
                         Switch Term/Definition
                     </button>
-                    <div class="flex items-center gap-1.5 ml-2 pl-3 border-l border-[rgba(0,0,0,0.08)] dark:border-[rgba(255,255,255,0.08)]">
+                    <div class="flex items-center gap-1.5 ml-2 pl-3 border-l border-[#DDD6CC] dark:border-[#353230]">
                     <!-- Shuffle Button -->
-                    <button id="shuffle-btn" onclick="shuffleDeckAndRender()" title="Shuffle OFF — click to turn ON (S)" class="p-2 bg-amber-500 text-white rounded-lg shadow-sm hover:bg-amber-600 transition duration-150 ease-in-out">
+                    <button id="shuffle-btn" onclick="shuffleDeckAndRender()" title="Shuffle OFF — click to turn ON (S)" class="p-2 bg-[#D97757] text-white rounded-lg shadow-sm hover:bg-[#C0684A] transition duration-150 ease-in-out">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="16 3 21 3 21 8"/>
                             <line x1="4" y1="20" x2="21" y2="3"/>
@@ -400,7 +307,7 @@
                         </svg>
                     </button>
                     <!-- Theme Toggle Button -->
-                    <button id="theme-toggle" title="Toggle Dark/Light Mode" class="p-2 bg-white dark:bg-[#2a2a3e] text-gray-600 dark:text-gray-300 rounded-lg border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)] shadow-sm hover:bg-gray-50 dark:hover:bg-[#353550] transition duration-150 ease-in-out">
+                    <button id="theme-toggle" title="Toggle Dark/Light Mode" class="p-2 bg-[#FDFCF9] dark:bg-[#252220] text-[#6B625A] dark:text-[#9C958E] rounded-lg border border-[#DDD6CC] dark:border-[#353230] shadow-sm hover:bg-[#FAF7F2] dark:hover:bg-[#2E2B28] transition duration-150 ease-in-out">
                         <svg id="sun-icon" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="display:none;">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
@@ -409,7 +316,7 @@
                         </svg>
                     </button>
                     <!-- Fullscreen Button -->
-                    <button id="fullscreen-btn" onclick="toggleFullscreen()" title="Toggle Fullscreen" class="p-2 bg-white dark:bg-[#2a2a3e] text-gray-600 dark:text-gray-300 rounded-lg border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)] shadow-sm hover:bg-gray-50 dark:hover:bg-[#353550] transition duration-150 ease-in-out">
+                    <button id="fullscreen-btn" onclick="toggleFullscreen()" title="Toggle Fullscreen" class="p-2 bg-[#FDFCF9] dark:bg-[#252220] text-[#6B625A] dark:text-[#9C958E] rounded-lg border border-[#DDD6CC] dark:border-[#353230] shadow-sm hover:bg-[#FAF7F2] dark:hover:bg-[#2E2B28] transition duration-150 ease-in-out">
                         <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-3v4m0 0h-4m4 0l-5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
                         </svg>
@@ -419,50 +326,50 @@
             </div>
 
             <!-- Keyboard hints -->
-            <p class="text-center text-xs text-gray-500 dark:text-gray-400 mb-6">
+            <p class="text-center text-xs text-[#6B625A] dark:text-[#8C847C] mb-6">
                 <span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> navigate &nbsp;&middot;&nbsp;
                 <span class="kbd">Space</span> flip &nbsp;&middot;&nbsp;
                 <span class="kbd">S</span> shuffle
             </p>
 
-            <hr class="w-full border-t border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)] my-8">
+            <hr class="w-full border-t border-[#DDD6CC] dark:border-[#353230] my-8">
 
             <!-- URL Generator Section -->
             <div class="glass w-full p-6 rounded-2xl mt-6">
-                <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-1">Flashcard Link Generator</h2>
-                <p class="text-gray-500 dark:text-gray-400 mb-4 text-sm">
+                <h2 class="text-xl font-bold text-[#1F1B17] dark:text-[#E8E4DE] mb-1">Flashcard Link Generator</h2>
+                <p class="text-[#6B625A] dark:text-[#8C847C] mb-4 text-sm">
                     Create a shareable deck that lives entirely in the link &mdash; nothing is stored on a server.
                 </p>
-                <div class="bg-[#f8f8fb] dark:bg-[#222236] rounded-lg p-3 mb-4 text-sm text-gray-700 dark:text-gray-300 border border-[rgba(0,0,0,0.04)] dark:border-[rgba(255,255,255,0.04)]">
-                    <p class="font-semibold text-gray-700 dark:text-gray-300 mb-1">One card per line:</p>
+                <div class="bg-[#FAF7F2] dark:bg-[#252220] rounded-lg p-3 mb-4 text-sm text-[#1F1B17] dark:text-[#E8E4DE] border border-[#DDD6CC] dark:border-[#353230]">
+                    <p class="font-semibold text-[#1F1B17] dark:text-[#E8E4DE] mb-1">One card per line:</p>
                     <p><code class="font-mono">Term : Definition | Optional example sentence</code></p>
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Tip: add a macron to a Latin vowel with <code class="font-mono">^</code> or <code class="font-mono">_</code> (e.g. <code class="font-mono">intent^e</code> &rarr; intentē).</p>
+                    <p class="mt-1 text-xs text-[#6B625A] dark:text-[#8C847C]">Tip: add a macron to a Latin vowel with <code class="font-mono">^</code> or <code class="font-mono">_</code> (e.g. <code class="font-mono">intent^e</code> &rarr; intentē).</p>
                 </div>
 
-                <input type="text" id="title-input" class="w-full p-3 bg-white dark:bg-[#222236] dark:text-gray-100 rounded-lg border border-[rgba(0,0,0,0.08)] dark:border-[rgba(255,255,255,0.08)] focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 focus:outline-none text-gray-700 placeholder-gray-500 dark:placeholder-gray-400 mb-3" placeholder="Enter Deck Title (e.g., Biology Terms)">
+                <input type="text" id="title-input" class="w-full p-3 bg-[#FDFCF9] dark:bg-[#252220] dark:text-[#E8E4DE] rounded-lg border border-[#DDD6CC] dark:border-[#353230] focus:ring-2 focus:ring-[#D97757]/40 focus:border-[#D97757] focus:outline-none text-[#1F1B17] placeholder-[#A39B93] dark:placeholder-[#6B625A] mb-3" placeholder="Enter Deck Title (e.g., Biology Terms)">
 
-                <textarea id="card-input" rows="6" class="w-full p-3 bg-white dark:bg-[#222236] dark:text-gray-100 rounded-lg border border-[rgba(0,0,0,0.08)] dark:border-[rgba(255,255,255,0.08)] focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 focus:outline-none text-gray-700 placeholder-gray-500 dark:placeholder-gray-400 mb-1 resize-y font-mono text-sm" placeholder="ferociter:fiercely | He fought ferociter in battle.&#10;conspicit:catches sight of | She conspicit the enemy.&#10;intent^e:intently | He listened intent^e to the lecture."></textarea>
-                <p id="input-stats" class="text-xs text-gray-500 dark:text-gray-400 mb-3 text-right"></p>
+                <textarea id="card-input" rows="6" class="w-full p-3 bg-[#FDFCF9] dark:bg-[#252220] dark:text-[#E8E4DE] rounded-lg border border-[#DDD6CC] dark:border-[#353230] focus:ring-2 focus:ring-[#D97757]/40 focus:border-[#D97757] focus:outline-none text-[#1F1B17] placeholder-[#A39B93] dark:placeholder-[#6B625A] mb-1 resize-y font-mono text-sm" placeholder="ferociter:fiercely | He fought ferociter in battle.&#10;conspicit:catches sight of | She conspicit the enemy.&#10;intent^e:intently | He listened intent^e to the lecture."></textarea>
+                <p id="input-stats" class="text-xs text-[#6B625A] dark:text-[#8C847C] mb-3 text-right"></p>
 
-                <button onclick="generateLink()" class="w-full py-3 bg-emerald-500 text-white font-bold rounded-xl shadow-sm hover:bg-emerald-600 transition duration-150 ease-in-out">
+                <button onclick="generateLink()" class="w-full py-3 bg-[#D97757] text-white font-bold rounded-xl shadow-sm hover:bg-[#C0684A] transition duration-150 ease-in-out">
                     Generate Shareable Link
                 </button>
 
                 <!-- Data Management Buttons -->
                 <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <button onclick="exportDeck()" class="py-2 px-4 bg-blue-500 text-white font-semibold rounded-lg shadow-sm hover:bg-blue-600 transition duration-150 ease-in-out">
+                    <button onclick="exportDeck()" class="py-2 px-4 bg-[#D97757] text-white font-semibold rounded-lg shadow-sm hover:bg-[#C0684A] transition duration-150 ease-in-out">
                         &#128229; Export Deck
                     </button>
-                    <button onclick="importDeck()" class="py-2 px-4 bg-purple-500 text-white font-semibold rounded-lg shadow-sm hover:bg-purple-600 transition duration-150 ease-in-out">
+                    <button onclick="importDeck()" class="py-2 px-4 bg-[#D97757] text-white font-semibold rounded-lg shadow-sm hover:bg-[#C0684A] transition duration-150 ease-in-out">
                         &#128228; Import Deck
                     </button>
                 </div>
 
                 <div id="link-output-container" class="mt-4 hidden">
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Share this link:</p>
+                    <p class="text-sm font-medium text-[#6B625A] dark:text-[#8C847C] mb-2">Share this link:</p>
                     <div class="flex items-center">
-                        <input type="text" id="link-output" readonly class="flex-grow p-3 bg-white dark:bg-[#222236] dark:text-gray-100 rounded-l-lg border border-[rgba(0,0,0,0.08)] dark:border-[rgba(255,255,255,0.08)] text-sm truncate">
-                        <button onclick="copyLink()" class="p-3 bg-gray-700 text-white rounded-r-lg hover:bg-gray-800 transition duration-150 ease-in-out flex-shrink-0">
+                        <input type="text" id="link-output" readonly class="flex-grow p-3 bg-[#FDFCF9] dark:bg-[#252220] dark:text-[#E8E4DE] rounded-l-lg border border-[#DDD6CC] dark:border-[#353230] text-sm truncate">
+                        <button onclick="copyLink()" class="p-3 bg-[#6B625A] text-white rounded-r-lg hover:bg-[#5A524A] transition duration-150 ease-in-out flex-shrink-0">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                 <path d="M8 2a1 1 0 000 2h2a1 1 0 100-2H8z" />
                                 <path d="M3 5a2 2 0 012-2c1.248 0 2.213.792 2.85 1.775L9 5h1l.15-.225C10.787 3.792 11.752 3 13 3a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm10 2a1 1 0 100 2h-3a1 1 0 100 2h3a1 1 0 100 2h-3a1 1 0 100 2H5V7h8z" clip-rule="evenodd" />
@@ -471,15 +378,15 @@
                     </div>
                     <!-- URL capacity meter -->
                     <div class="mt-3">
-                        <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+                        <div class="flex justify-between text-xs text-[#6B625A] dark:text-[#8C847C] mb-1">
                             <span id="url-length-label"></span>
                             <span id="url-capacity-label"></span>
                         </div>
-                        <div class="w-full h-1.5 rounded-full overflow-hidden bg-[rgba(0,0,0,0.06)] dark:bg-[rgba(255,255,255,0.06)]">
-                            <div id="url-capacity-bar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%;"></div>
+                        <div class="w-full h-1.5 rounded-full overflow-hidden bg-[#E2D9CC] dark:bg-[#353230]">
+                            <div id="url-capacity-bar" class="h-full bg-[#D97757] transition-all duration-300" style="width: 0%;"></div>
                         </div>
                     </div>
-                    <p id="copy-message" class="text-xs text-green-600 mt-1 opacity-0 transition duration-300">Link copied!</p>
+                    <p id="copy-message" class="text-xs text-[#C0684A] mt-1 opacity-0 transition duration-300">Link copied!</p>
                 </div>
             </div>
         </main>
@@ -597,12 +504,12 @@
             const btn = document.getElementById('shuffle-btn');
             if (!btn) return;
             if (shuffleEnabled) {
-                btn.classList.remove('bg-amber-500/85', 'hover:bg-amber-500');
-                btn.classList.add('bg-emerald-500', 'hover:bg-emerald-600');
+                btn.classList.remove('bg-[#D97757]', 'hover:bg-[#C0684A]');
+                btn.classList.add('bg-[#B85C3E]', 'hover:bg-[#A34D32]');
                 btn.title = 'Shuffle ON — click to turn OFF (S)';
             } else {
-                btn.classList.remove('bg-emerald-500', 'hover:bg-emerald-600');
-                btn.classList.add('bg-amber-500/85', 'hover:bg-amber-500');
+                btn.classList.remove('bg-[#B85C3E]', 'hover:bg-[#A34D32]');
+                btn.classList.add('bg-[#D97757]', 'hover:bg-[#C0684A]');
                 btn.title = 'Shuffle OFF — click to shuffle (S)';
             }
         }
@@ -1070,7 +977,7 @@
             const pct = Math.min(100, (urlLength / URL_SAFE_LIMIT) * 100);
             bar.style.width = `${pct}%`;
             bar.className = 'h-full transition-all duration-300 ' +
-                (urlLength > URL_SAFE_LIMIT ? 'bg-red-500' : urlLength > URL_SAFE_LIMIT * 0.75 ? 'bg-amber-500' : 'bg-emerald-500');
+                (urlLength > URL_SAFE_LIMIT ? 'bg-red-500' : urlLength > URL_SAFE_LIMIT * 0.75 ? 'bg-[#D97757]' : 'bg-[#D97757]');
 
             lengthLabel.textContent = `URL length: ${urlLength.toLocaleString()} chars`;
             capacityLabel.textContent = urlLength > URL_SAFE_LIMIT
