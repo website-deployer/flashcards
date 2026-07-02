@@ -1322,30 +1322,31 @@
             var shapes = ['bg-shape-circle', 'bg-shape-square', 'bg-shape-triangle'];
             var anims = ['float', 'drift', 'breathe', 'sway'];
 
-            // 8 well-spaced positions following rule of thirds
+            // Corner-only positions — shapes peek in from edges, away from content
             var slots = [
-                { top: 4, left: 3 }, { top: 3, left: 80 },
-                { top: 82, left: 3 }, { top: 82, left: 80 },
-                { top: 15, left: 32 }, { top: 12, left: 66 },
-                { top: 78, left: 32 }, { top: 78, left: 66 },
+                { top: 2, left: -2 },
+                { top: 2, left: 82 },
+                { top: 82, left: -2 },
+                { top: 82, left: 82 },
+                { top: -4, left: 40 },
             ];
             shuffleArray(slots);
 
-            var count = 4 + Math.floor(Math.random() * 4); // 4-7 shapes
+            var count = 4 + Math.floor(Math.random() * 2); // 4-5 shapes
             for (var i = 0; i < count; i++) {
                 var el = document.createElement('div');
                 var shape = shapes[i % shapes.length];
-                var size = 250 + Math.random() * 250; // 250-500px
+                var size = 100 + Math.random() * 80; // 100-180px
                 el.className = 'bg-shape ' + shape;
                 var color = pick(colors);
-                var opacity = (0.06 + Math.random() * 0.10).toFixed(3); // 6-16%
-                var blur = 8 + Math.random() * 12; // 8-20px
+                var opacity = (0.08 + Math.random() * 0.06).toFixed(3); // 8-14%
+                var blur = 12 + Math.random() * 8; // 12-20px
                 var s = slots[i % slots.length];
-                var top = Math.max(1, Math.min(94, s.top + (Math.random() - 0.5) * 8));
-                var left = Math.max(1, Math.min(94, s.left + (Math.random() - 0.5) * 8));
+                var top = Math.max(-10, Math.min(90, s.top + (Math.random() - 0.5) * 6));
+                var left = Math.max(-10, Math.min(90, s.left + (Math.random() - 0.5) * 6));
                 el.style.cssText = 'width:' + size + 'px;height:' + size + 'px;top:' + top + '%;left:' + left + '%;background:' + color + opacity + ');filter:blur(' + blur + 'px)';
                 if (!prefersReducedMotion) {
-                    el.style.animation = pick(anims) + ' ' + (20 + Math.random() * 15).toFixed(1) + 's ease-in-out infinite';
+                    el.style.animation = pick(anims) + ' ' + (22 + Math.random() * 12).toFixed(1) + 's ease-in-out infinite';
                     el.style.animationDelay = (Math.random() * 5).toFixed(1) + 's';
                 }
                 container.appendChild(el);
