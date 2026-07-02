@@ -311,16 +311,8 @@
         .bg-shape-square {
             border-radius: 16px;
         }
-        .bg-shape-dotted-line {
-            position: absolute;
-            pointer-events: none;
-            will-change: transform;
-        }
-        .bg-dot {
-            position: absolute;
-            border-radius: 50%;
-            pointer-events: none;
-            will-change: transform;
+        .bg-shape-triangle {
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
         }
 
         /* Slow ambient animations */
@@ -1304,19 +1296,9 @@
         function getThemeColors() {
             var isDark = document.documentElement.classList.contains('dark');
             if (isDark) {
-                return {
-                    circle: ['rgba(249,247,242,', 'rgba(217,119,87,', 'rgba(220,200,175,'],
-                    square: ['rgba(249,247,242,', 'rgba(217,119,87,', 'rgba(200,150,130,'],
-                    dot: ['rgba(249,247,242,', 'rgba(217,119,87,'],
-                    line: 'rgba(249,247,242,',
-                };
+                return ['rgba(249,247,242,', 'rgba(217,119,87,', 'rgba(220,200,175,'];
             }
-            return {
-                circle: ['rgba(217,119,87,', 'rgba(180,85,55,', 'rgba(180,165,150,'],
-                square: ['rgba(217,119,87,', 'rgba(163,155,147,', 'rgba(230,180,130,'],
-                dot: ['rgba(217,119,87,', 'rgba(180,85,55,'],
-                line: 'rgba(217,119,87,',
-            };
+            return ['rgba(217,119,87,', 'rgba(180,85,55,', 'rgba(180,165,150,'];
         }
 
         function shuffleArray(arr) {
@@ -1326,169 +1308,45 @@
             }
         }
 
+        function pick(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
         function generateBgShapes() {
             var container = document.querySelector('.bg-decoration');
             if (!container) return;
 
             var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
             var colors = getThemeColors();
-            var animNames = ['float', 'drift', 'breathe', 'sway'];
 
-            // Curated composition: rule-of-thirds + corner placements
+            var shapes = ['bg-shape-circle', 'bg-shape-square', 'bg-shape-triangle'];
+            var anims = ['float', 'drift', 'breathe', 'sway'];
+
+            // 8 well-spaced positions following rule of thirds
             var slots = [
-                // Corners (hero shapes peeking in)
-                { top: 4, left: 3 },
-                { top: 3, left: 80 },
-                { top: 80, left: 3 },
-                { top: 82, left: 80 },
-                // Rule-of-thirds intersections (mid shapes)
-                { top: 15, left: 32 },
-                { top: 12, left: 66 },
-                { top: 48, left: 32 },
-                { top: 48, left: 66 },
-                { top: 78, left: 32 },
-                { top: 78, left: 66 },
-                // Content edges (small accents)
-                { top: 35, left: 86 },
-                { top: 62, left: 86 },
-                { top: 35, left: 4 },
-                { top: 62, left: 4 },
-                // Center (one subtle accent)
-                { top: 46, left: 46 },
-                // Extra spread
-                { top: 22, left: 18 },
-                { top: 68, left: 18 },
-                { top: 20, left: 50 },
-                { top: 70, left: 50 },
+                { top: 4, left: 3 }, { top: 3, left: 80 },
+                { top: 82, left: 3 }, { top: 82, left: 80 },
+                { top: 15, left: 32 }, { top: 12, left: 66 },
+                { top: 78, left: 32 }, { top: 78, left: 66 },
             ];
             shuffleArray(slots);
-            var slotIdx = 0;
-            function nextPos() {
-                var s = slots[slotIdx % slots.length];
-                slotIdx++;
-                return {
-                    top: Math.max(1, Math.min(94, s.top + (Math.random() - 0.5) * 6)),
-                    left: Math.max(1, Math.min(94, s.left + (Math.random() - 0.5) * 6)),
-                };
-            }
 
-            // --- Hero circles (1-2 large, very subtle, always corners) ---
-            var heroCount = 1 + Math.floor(Math.random() * 2);
-            for (var i = 0; i < heroCount; i++) {
+            var count = 4 + Math.floor(Math.random() * 4); // 4-7 shapes
+            for (var i = 0; i < count; i++) {
                 var el = document.createElement('div');
-                var size = 350 + Math.random() * 150;
-                el.className = 'bg-shape bg-shape-circle';
-                var color = colors.circle[Math.floor(Math.random() * colors.circle.length)];
-                var opacity = (0.06 + Math.random() * 0.04).toFixed(3);
-                var blur = 12 + Math.random() * 6;
-                var pos = nextPos();
-                el.style.cssText = 'width:' + size + 'px;height:' + size + 'px;top:' + pos.top + '%;left:' + pos.left + '%;background:' + color + opacity + ');filter:blur(' + blur + 'px)';
+                var shape = shapes[i % shapes.length];
+                var size = 250 + Math.random() * 250; // 250-500px
+                el.className = 'bg-shape ' + shape;
+                var color = pick(colors);
+                var opacity = (0.06 + Math.random() * 0.10).toFixed(3); // 6-16%
+                var blur = 8 + Math.random() * 12; // 8-20px
+                var s = slots[i % slots.length];
+                var top = Math.max(1, Math.min(94, s.top + (Math.random() - 0.5) * 8));
+                var left = Math.max(1, Math.min(94, s.left + (Math.random() - 0.5) * 8));
+                el.style.cssText = 'width:' + size + 'px;height:' + size + 'px;top:' + top + '%;left:' + left + '%;background:' + color + opacity + ');filter:blur(' + blur + 'px)';
                 if (!prefersReducedMotion) {
-                    el.style.animation = 'float ' + (25 + Math.random() * 5).toFixed(1) + 's ease-in-out infinite';
-                    el.style.animationDelay = (Math.random() * 4).toFixed(1) + 's';
-                }
-                container.appendChild(el);
-            }
-
-            // --- Mid circles (2-3 medium, rule-of-thirds) ---
-            var midCount = 2 + Math.floor(Math.random() * 2);
-            for (var i = 0; i < midCount; i++) {
-                var el = document.createElement('div');
-                var size = 150 + Math.random() * 130;
-                el.className = 'bg-shape bg-shape-circle';
-                var color = colors.circle[Math.floor(Math.random() * colors.circle.length)];
-                var opacity = (0.08 + Math.random() * 0.08).toFixed(3);
-                var blur = 8 + Math.random() * 6;
-                var pos = nextPos();
-                el.style.cssText = 'width:' + size + 'px;height:' + size + 'px;top:' + pos.top + '%;left:' + pos.left + '%;background:' + color + opacity + ');filter:blur(' + blur + 'px)';
-                if (!prefersReducedMotion) {
-                    el.style.animation = 'sway ' + (20 + Math.random() * 10).toFixed(1) + 's ease-in-out infinite';
+                    el.style.animation = pick(anims) + ' ' + (20 + Math.random() * 15).toFixed(1) + 's ease-in-out infinite';
                     el.style.animationDelay = (Math.random() * 5).toFixed(1) + 's';
-                }
-                container.appendChild(el);
-            }
-
-            // --- Accent circle (1 small, higher contrast, content edge or center) ---
-            var accentEl = document.createElement('div');
-            var accentSize = 80 + Math.random() * 60;
-            accentEl.className = 'bg-shape bg-shape-circle';
-            var accentColor = colors.circle[Math.floor(Math.random() * 2)];
-            var accentOpacity = (0.16 + Math.random() * 0.08).toFixed(3);
-            var accentBlur = 4 + Math.random() * 4;
-            var accentPos = nextPos();
-            accentEl.style.cssText = 'width:' + accentSize + 'px;height:' + accentSize + 'px;top:' + accentPos.top + '%;left:' + accentPos.left + '%;background:' + accentColor + accentOpacity + ');filter:blur(' + accentBlur + 'px)';
-            if (!prefersReducedMotion) {
-                accentEl.style.animation = 'breathe ' + (22 + Math.random() * 8).toFixed(1) + 's ease-in-out infinite';
-                accentEl.style.animationDelay = (Math.random() * 3).toFixed(1) + 's';
-            }
-            container.appendChild(accentEl);
-
-            // --- Hero square (1, corner or third) ---
-            var hsEl = document.createElement('div');
-            var hsSize = 140 + Math.random() * 60;
-            hsEl.className = 'bg-shape bg-shape-square';
-            var hsColor = colors.square[Math.floor(Math.random() * colors.square.length)];
-            var hsOpacity = (0.14 + Math.random() * 0.08).toFixed(3);
-            var hsBlur = 5 + Math.random() * 4;
-            var hsPos = nextPos();
-            hsEl.style.cssText = 'width:' + hsSize + 'px;height:' + hsSize + 'px;top:' + hsPos.top + '%;left:' + hsPos.left + '%;background:' + hsColor + hsOpacity + ');filter:blur(' + hsBlur + 'px)';
-            if (!prefersReducedMotion) {
-                hsEl.style.animation = 'drift ' + (22 + Math.random() * 10).toFixed(1) + 's ease-in-out infinite';
-                hsEl.style.animationDelay = (Math.random() * 4).toFixed(1) + 's';
-            }
-            container.appendChild(hsEl);
-
-            // --- Accent squares (1-2, small) ---
-            var asCount = 1 + Math.floor(Math.random() * 2);
-            for (var i = 0; i < asCount; i++) {
-                var el = document.createElement('div');
-                var size = 60 + Math.random() * 60;
-                el.className = 'bg-shape bg-shape-square';
-                var color = colors.square[Math.floor(Math.random() * colors.square.length)];
-                var opacity = (0.20 + Math.random() * 0.10).toFixed(3);
-                var blur = 3 + Math.random() * 3;
-                var pos = nextPos();
-                el.style.cssText = 'width:' + size + 'px;height:' + size + 'px;top:' + pos.top + '%;left:' + pos.left + '%;background:' + color + opacity + ');filter:blur(' + blur + 'px)';
-                if (!prefersReducedMotion) {
-                    el.style.animation = 'float ' + (18 + Math.random() * 8).toFixed(1) + 's ease-in-out infinite';
-                    el.style.animationDelay = (Math.random() * 3).toFixed(1) + 's';
-                }
-                container.appendChild(el);
-            }
-
-            // --- Vertical dotted lines (2, at 1/3 and 2/3 vertical slices) ---
-            var linePositions = [
-                { top: 18, left: 8 },
-                { top: 18, left: 88 },
-            ];
-            shuffleArray(linePositions);
-            for (var i = 0; i < 2; i++) {
-                var el = document.createElement('div');
-                el.className = 'bg-shape-dotted-line';
-                var height = 120 + Math.random() * 100;
-                var lp = linePositions[i];
-                el.style.cssText = 'height:' + height + 'px;top:' + lp.top + '%;left:' + lp.left + '%;width:2px;background:repeating-linear-gradient(to bottom,' + colors.line + '0.25) 0px,' + colors.line + '0.25) 4px,transparent 4px,transparent 12px)';
-                if (!prefersReducedMotion) {
-                    el.style.animation = 'breathe ' + (28 + Math.random() * 8).toFixed(1) + 's ease-in-out infinite';
-                    el.style.animationDelay = (Math.random() * 3).toFixed(1) + 's';
-                }
-                container.appendChild(el);
-            }
-
-            // --- Dots (10-14, scattered along content edges) ---
-            var dotCount = 10 + Math.floor(Math.random() * 5);
-            for (var i = 0; i < dotCount; i++) {
-                var el = document.createElement('div');
-                var size = 3 + Math.random() * 6;
-                el.className = 'bg-dot';
-                var color = colors.dot[Math.floor(Math.random() * colors.dot.length)];
-                var opacity = (0.20 + Math.random() * 0.22).toFixed(3);
-                var pos = nextPos();
-                el.style.cssText = 'width:' + size + 'px;height:' + size + 'px;top:' + pos.top + '%;left:' + pos.left + '%;background:' + color + opacity + ')';
-                if (!prefersReducedMotion) {
-                    var anim = animNames[i % animNames.length];
-                    el.style.animation = anim + ' ' + (14 + Math.random() * 14).toFixed(1) + 's ease-in-out infinite';
-                    el.style.animationDelay = (Math.random() * 6).toFixed(1) + 's';
                 }
                 container.appendChild(el);
             }
@@ -1497,7 +1355,7 @@
         function regenerateBgShapes() {
             const container = document.querySelector('.bg-decoration');
             if (!container) return;
-            const shapes = container.querySelectorAll('.bg-shape, .bg-shape-dotted-line, .bg-dot');
+            const shapes = container.querySelectorAll('.bg-shape');
             shapes.forEach(function(el) { el.remove(); });
             generateBgShapes();
         }
