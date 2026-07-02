@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="/favicon.png">
+    <title>Flashcards</title>
+    <!-- Load Tailwind CSS -->
+    <!-- Note: Using CDN for development - in production, install Tailwind CSS as PostCSS plugin -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <!-- LZ-String for high-ratio URL-safe compression -->
+    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+    <!-- Use Inter font family -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Animated color blobs in the background (gives the glass surfaces something to blur) */
+        .app-bg {
+            background-color: #f5f5f7;
+        }
+        .dark .app-bg {
+            background-color: #16162a;
+        }
+
+        /* Floating blob elements */
+        .bg-blobs {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: -1;
+        }
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            will-change: transform;
+        }
+        .blob-1 {
+            width: 900px; height: 500px;
+            left: 5%; top: -10%;
+            background: radial-gradient(ellipse, rgba(99, 102, 241, 0.35), transparent 60%);
+            animation: float1 22s ease-in-out infinite;
+        }
+        .blob-2 {
+            width: 800px; height: 480px;
+            right: 3%; top: 5%;
+            background: radial-gradient(ellipse, rgba(56, 189, 248, 0.28), transparent 60%);
+            animation: float2 28s ease-in-out infinite;
+        }
+        .blob-3 {
+            width: 900px; height: 520px;
+            right: 5%; bottom: -5%;
+            background: radial-gradient(ellipse, rgba(168, 85, 247, 0.30), transparent 60%);
+            animation: float3 25s ease-in-out infinite;
+        }
+        .blob-4 {
+            width: 700px; height: 420px;
+            left: 0%; bottom: 0%;
+            background: radial-gradient(ellipse, rgba(244, 114, 182, 0.22), transparent 60%);
+            animation: float4 30s ease-in-out infinite;
+        }
+        .dark .blob-1 {
+            background: radial-gradient(ellipse, rgba(99, 102, 241, 0.32), transparent 60%);
+        }
+        .dark .blob-2 {
+            background: radial-gradient(ellipse, rgba(34, 211, 238, 0.16), transparent 60%);
+        }
+        .dark .blob-3 {
+            background: radial-gradient(ellipse, rgba(168, 85, 247, 0.26), transparent 60%);
+        }
+        .dark .blob-4 {
+            background: radial-gradient(ellipse, rgba(236, 72, 153, 0.14), transparent 60%);
+        }
+
+        @keyframes float1 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(6vw, 8vh) scale(1.08); }
+            50% { transform: translate(-3vw, 4vh) scale(0.95); }
+            75% { transform: translate(8vw, -6vh) scale(1.05); }
+        }
+        @keyframes float2 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(-5vw, 6vh) scale(0.92); }
+            50% { transform: translate(7vw, -4vh) scale(1.06); }
+            75% { transform: translate(-4vw, 8vh) scale(1.02); }
+        }
+        @keyframes float3 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(4vw, -7vh) scale(1.05); }
+            50% { transform: translate(-8vw, 5vh) scale(0.93); }
+            75% { transform: translate(6vw, 4vh) scale(1.07); }
+        }
+        @keyframes float4 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(-7vw, -5vh) scale(1.07); }
+            50% { transform: translate(5vw, 8vh) scale(0.94); }
+            75% { transform: translate(-6vw, -3vh) scale(1.03); }
+        }
+
+        /* --- Claude-style clean surfaces --- */
+        .glass {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
+        }
+        .dark .glass {
+            background: #2a2a3e;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        .glass-strong {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
+        }
+        .dark .glass-strong {
+            background: #2a2a3e;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        .glass-tint {
+            background: #f8f7ff;
+            border: 1px solid rgba(99, 102, 241, 0.12);
+            box-shadow: 0 1px 3px rgba(79, 70, 229, 0.05);
+        }
+        .dark .glass-tint {
+            background: #2e2d48;
+            border: 1px solid rgba(129, 140, 248, 0.12);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        .glass-input {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+        }
+        .dark .glass-input {
+            background: #222236;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* Card face overrides */
+        .card-front, .card-back {
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+        }
+        .card-front.glass-strong {
+            background: #ffffff;
+        }
+        .dark .card-front.glass-strong {
+            background: #2a2a3e;
+        }
+        .card-back.glass-tint {
+            background: #f8f7ff;
+        }
+        .dark .card-back.glass-tint {
+            background: #2e2d48;
+        }
+
+        /* 3D Flip Animation */
+        .card-container {
+            perspective: 1200px;
+        }
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+        .card-container.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            border-radius: 1.5rem;
+        }
+        .card-back {
+            transform: rotateY(180deg);
+        }
+        .card-hint {
+            position: absolute;
+            bottom: 1rem;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            opacity: 0.5;
+            font-weight: 600;
+        }
+
+        /* Responsive Text Scaling - Default/Mobile */
+        .card-content-front {
+            font-size: 2.25rem;
+            font-weight: 700;
+            transition: font-size 0.3s;
+        }
+        .card-content-back-def {
+             font-size: 1.5rem;
+             font-weight: 600;
+             transition: font-size 0.3s;
+        }
+        .card-content-back-ex {
+             font-size: 1.125rem;
+             transition: font-size 0.3s;
+        }
+
+        @media (max-width: 640px) {
+            .card-content-front {
+                font-size: 1.75rem;
+            }
+            .card-content-back-def {
+                font-size: 1.25rem;
+            }
+            .card-content-back-ex {
+                font-size: 1rem;
+            }
+        }
+
+        /* Subtle slide-in when changing cards */
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .card-anim {
+            animation: cardIn 0.25s ease-out;
+        }
+
+        /* Keyboard hint chips */
+        .kbd {
+            display: inline-block;
+            padding: 0.1rem 0.45rem;
+            border-radius: 0.375rem;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-bottom-width: 2px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            line-height: 1.2;
+            background: #ffffff;
+            color: #6b7280;
+        }
+        .dark .kbd {
+            background: #2a2a3e;
+            border-color: rgba(255, 255, 255, 0.08);
+            color: #9ca3af;
+        }
+
+        /* --- Fullscreen Styles --- */
+        #flashcard-container:fullscreen,
+        #flashcard-container:-webkit-full-screen,
+        #flashcard-container:-moz-full-screen,
+        #flashcard-container:-ms-full-screen {
+            background: transparent;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 0;
+            cursor: pointer;
+            z-index: 9999;
+        }
+
+        #flashcard-container:fullscreen #card-inner,
+        #flashcard-container:-webkit-full-screen #card-inner,
+        #flashcard-container:-moz-full-screen #card-inner,
+        #flashcard-container:-ms-full-screen #card-inner {
+            width: 80vw;
+            height: 70vh;
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 2rem;
+        }
+
+        #flashcard-container:fullscreen .card-content-front,
+        #flashcard-container:-webkit-full-screen .card-content-front,
+        #flashcard-container:-moz-full-screen .card-content-front,
+        #flashcard-container:-ms-full-screen .card-content-front {
+            font-size: 4rem;
+        }
+
+        #flashcard-container:fullscreen .card-content-back-def,
+        #flashcard-container:-webkit-full-screen .card-content-back-def,
+        #flashcard-container:-moz-full-screen .card-content-back-def,
+        #flashcard-container:-ms-full-screen .card-content-back-def {
+            font-size: 2.5rem;
+        }
+
+        #flashcard-container:fullscreen .card-content-back-ex,
+        #flashcard-container:-webkit-full-screen .card-content-back-ex,
+        #flashcard-container:-moz-full-screen .card-content-back-ex,
+        #flashcard-container:-ms-full-screen .card-content-back-ex {
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body class="app-bg flex items-center justify-center min-h-screen p-4">
+
+    <div class="bg-blobs" aria-hidden="true">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+        <div class="blob blob-4"></div>
+    </div>
+
+    <div class="w-full max-w-2xl mx-auto">
+
+        <!-- Header -->
+        <header class="text-center mb-6">
+            <h1 id="deck-title" class="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Flashcard Deck</h1>
+            <p id="deck-subtitle" class="mt-1 text-sm text-gray-500 dark:text-gray-400"></p>
+        </header>
+
+        <main>
+            <!-- Progress Bar -->
+            <div class="flex items-center gap-3 mb-6">
+                <div class="flex-grow h-2 rounded-full overflow-hidden bg-[rgba(0,0,0,0.06)] dark:bg-[rgba(255,255,255,0.06)]">
+                    <div id="progress-bar" class="h-full bg-indigo-500 transition-all duration-300 ease-in-out" style="width: 0%;"></div>
+                </div>
+                <div id="card-counter" class="text-xs font-semibold text-gray-500 dark:text-gray-400 px-2.5 py-1 whitespace-nowrap">
+                    0 / 0
+                </div>
+            </div>
+
+            <!-- Flashcard Container - Target for Fullscreen -->
+            <div id="flashcard-container" class="card-container w-full h-80 cursor-pointer mb-6" onclick="flipCard()">
+                <div id="card-inner" class="card-inner">
+                    <!-- Front of Card (Question / Root) -->
+                    <div id="card-front" class="card-front glass-strong">
+                        <p class="card-content-front text-gray-900 dark:text-gray-100"></p>
+                        <span class="card-hint text-gray-400 dark:text-gray-500">Tap or press Space to flip</span>
+                    </div>
+                    <!-- Back of Card (Answer / Definition + Example) -->
+                    <div id="card-back" class="card-back glass-tint">
+                        <div class="text-gray-800 dark:text-gray-100 p-4">
+                           <p id="back-definition" class="card-content-back-def text-gray-800 dark:text-gray-100 mb-2"></p>
+                           <p id="back-example" class="card-content-back-ex text-gray-600 dark:text-gray-300 italic"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="glass p-3 rounded-2xl mb-4 max-w-fit mx-auto">
+                <!-- Top Row: Navigation -->
+                <div class="flex items-center justify-center gap-2 mb-2">
+                    <button id="prev-btn" onclick="prevCard()" class="px-4 py-2 bg-white dark:bg-[#2a2a3e] text-gray-700 dark:text-gray-200 font-semibold rounded-xl border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)] shadow-sm hover:bg-gray-50 dark:hover:bg-[#353550] transition duration-150 ease-in-out disabled:opacity-40 disabled:cursor-not-allowed">
+                        &larr; Previous
+                    </button>
+                    <button id="flip-button" onclick="flipCard()" class="px-5 py-2 bg-indigo-500 text-white font-semibold rounded-xl shadow-sm hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-all duration-150">
+                        Flip
+                    </button>
+                    <button id="next-btn" onclick="nextCard()" class="px-4 py-2 bg-indigo-500 text-white font-semibold rounded-xl shadow-sm hover:bg-indigo-600 transition duration-150 ease-in-out disabled:opacity-40 disabled:cursor-not-allowed">
+                        Next &rarr;
+                    </button>
+                </div>
+
+                <!-- Bottom Row: Actions -->
+                <div class="flex items-center justify-center gap-2">
+                    <button id="switch-button" onclick="switchTermDefinition()" class="px-3 py-1.5 bg-purple-500 text-white font-semibold rounded-lg shadow-sm hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-300 transition-all duration-150 text-sm">
+                        Switch Term/Definition
+                    </button>
+                    <div class="flex items-center gap-1.5 ml-2 pl-3 border-l border-[rgba(0,0,0,0.08)] dark:border-[rgba(255,255,255,0.08)]">
+                    <!-- Shuffle Button -->
+                    <button id="shuffle-btn" onclick="shuffleDeckAndRender()" title="Shuffle OFF — click to turn ON (S)" class="p-2 bg-amber-500 text-white rounded-lg shadow-sm hover:bg-amber-600 transition duration-150 ease-in-out">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="16 3 21 3 21 8"/>
+                            <line x1="4" y1="20" x2="21" y2="3"/>
+                            <polyline points="21 16 21 21 16 21"/>
+                            <line x1="15" y1="15" x2="16" y2="16"/>
+                            <line x1="14" y1="12" x2="15" y2="13"/>
+                            <line x1="8" y1="8" x2="9" y2="9"/>
+                        </svg>
+                    </button>
+                    <!-- Theme Toggle Button -->
+                    <button id="theme-toggle" title="Toggle Dark/Light Mode" class="p-2 bg-white dark:bg-[#2a2a3e] text-gray-600 dark:text-gray-300 rounded-lg border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)] shadow-sm hover:bg-gray-50 dark:hover:bg-[#353550] transition duration-150 ease-in-out">
+                        <svg id="sun-icon" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="display:none;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        <svg id="moon-icon" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="display:block;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                        </svg>
+                    </button>
+                    <!-- Fullscreen Button -->
+                    <button id="fullscreen-btn" onclick="toggleFullscreen()" title="Toggle Fullscreen" class="p-2 bg-white dark:bg-[#2a2a3e] text-gray-600 dark:text-gray-300 rounded-lg border border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)] shadow-sm hover:bg-gray-50 dark:hover:bg-[#353550] transition duration-150 ease-in-out">
+                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-3v4m0 0h-4m4 0l-5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                        </svg>
+                    </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Keyboard hints -->
+            <p class="text-center text-xs text-gray-500 dark:text-gray-400 mb-6">
+                <span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> navigate &nbsp;&middot;&nbsp;
+                <span class="kbd">Space</span> flip &nbsp;&middot;&nbsp;
+                <span class="kbd">S</span> shuffle
+            </p>
+
+            <hr class="w-full border-t border-[rgba(0,0,0,0.06)] dark:border-[rgba(255,255,255,0.06)] my-8">
+
+            <!-- URL Generator Section -->
+            <div class="glass w-full p-6 rounded-2xl mt-6">
+                <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-1">Flashcard Link Generator</h2>
+                <p class="text-gray-500 dark:text-gray-400 mb-4 text-sm">
+                    Create a shareable deck that lives entirely in the link &mdash; nothing is stored on a server.
+                </p>
+                <div class="bg-[#f8f8fb] dark:bg-[#222236] rounded-lg p-3 mb-4 text-sm text-gray-700 dark:text-gray-300 border border-[rgba(0,0,0,0.04)] dark:border-[rgba(255,255,255,0.04)]">
+                    <p class="font-semibold text-gray-700 dark:text-gray-300 mb-1">One card per line:</p>
+                    <p><code class="font-mono">Term : Definition | Optional example sentence</code></p>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Tip: add a macron to a Latin vowel with <code class="font-mono">^</code> or <code class="font-mono">_</code> (e.g. <code class="font-mono">intent^e</code> &rarr; intentē).</p>
+                </div>
+
+                <input type="text" id="title-input" class="w-full p-3 bg-white dark:bg-[#222236] dark:text-gray-100 rounded-lg border border-[rgba(0,0,0,0.08)] dark:border-[rgba(255,255,255,0.08)] focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 focus:outline-none text-gray-700 placeholder-gray-500 dark:placeholder-gray-400 mb-3" placeholder="Enter Deck Title (e.g., Biology Terms)">
+
+                <textarea id="card-input" rows="6" class="w-full p-3 bg-white dark:bg-[#222236] dark:text-gray-100 rounded-lg border border-[rgba(0,0,0,0.08)] dark:border-[rgba(255,255,255,0.08)] focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 focus:outline-none text-gray-700 placeholder-gray-500 dark:placeholder-gray-400 mb-1 resize-y font-mono text-sm" placeholder="ferociter:fiercely | He fought ferociter in battle.&#10;conspicit:catches sight of | She conspicit the enemy.&#10;intent^e:intently | He listened intent^e to the lecture."></textarea>
+                <p id="input-stats" class="text-xs text-gray-500 dark:text-gray-400 mb-3 text-right"></p>
+
+                <button onclick="generateLink()" class="w-full py-3 bg-emerald-500 text-white font-bold rounded-xl shadow-sm hover:bg-emerald-600 transition duration-150 ease-in-out">
+                    Generate Shareable Link
+                </button>
+
+                <!-- Data Management Buttons -->
+                <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <button onclick="exportDeck()" class="py-2 px-4 bg-blue-500 text-white font-semibold rounded-lg shadow-sm hover:bg-blue-600 transition duration-150 ease-in-out">
+                        &#128229; Export Deck
+                    </button>
+                    <button onclick="importDeck()" class="py-2 px-4 bg-purple-500 text-white font-semibold rounded-lg shadow-sm hover:bg-purple-600 transition duration-150 ease-in-out">
+                        &#128228; Import Deck
+                    </button>
+                </div>
+
+                <div id="link-output-container" class="mt-4 hidden">
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Share this link:</p>
+                    <div class="flex items-center">
+                        <input type="text" id="link-output" readonly class="flex-grow p-3 bg-white dark:bg-[#222236] dark:text-gray-100 rounded-l-lg border border-[rgba(0,0,0,0.08)] dark:border-[rgba(255,255,255,0.08)] text-sm truncate">
+                        <button onclick="copyLink()" class="p-3 bg-gray-700 text-white rounded-r-lg hover:bg-gray-800 transition duration-150 ease-in-out flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M8 2a1 1 0 000 2h2a1 1 0 100-2H8z" />
+                                <path d="M3 5a2 2 0 012-2c1.248 0 2.213.792 2.85 1.775L9 5h1l.15-.225C10.787 3.792 11.752 3 13 3a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm10 2a1 1 0 100 2h-3a1 1 0 100 2h3a1 1 0 100 2h-3a1 1 0 100 2H5V7h8z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                    <!-- URL capacity meter -->
+                    <div class="mt-3">
+                        <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+                            <span id="url-length-label"></span>
+                            <span id="url-capacity-label"></span>
+                        </div>
+                        <div class="w-full h-1.5 rounded-full overflow-hidden bg-[rgba(0,0,0,0.06)] dark:bg-[rgba(255,255,255,0.06)]">
+                            <div id="url-capacity-bar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <p id="copy-message" class="text-xs text-green-600 mt-1 opacity-0 transition duration-300">Link copied!</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- DATA ---
+        const defaultCards = [];
+
+        // Practical URL length budget (safe across browsers, chat apps, QR codes)
+        const URL_SAFE_LIMIT = 8000;
+        const URL_HARD_LIMIT = 30000;
+
+        // --- Core Application State ---
+        let currentDeck = [];
+        let currentCardIndex = 0;
+        let isFlipped = false;
+        let shuffleEnabled = false;
+        let originalDeck = [];
+
+        // --- DOM Elements ---
+        const flashcardContainer = document.getElementById('flashcard-container');
+        const cardInnerEl = document.getElementById('card-inner');
+        const cardFrontText = document.querySelector('#card-front .card-content-front');
+        const cardBackDefEl = document.getElementById('back-definition');
+        const cardBackExEl = document.getElementById('back-example');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const cardCounterEl = document.getElementById('card-counter');
+        const deckTitleEl = document.getElementById('deck-title');
+        const deckSubtitleEl = document.getElementById('deck-subtitle');
+        const progressBarEl = document.getElementById('progress-bar');
+        const linkOutputContainer = document.getElementById('link-output-container');
+        const linkOutputEl = document.getElementById('link-output');
+        const copyMessageEl = document.getElementById('copy-message');
+
+        // --- Utility Functions ---
+
+        /**
+         * Formats Latin text with proper diacritical marks and accent formatting
+         * Converts common Latin diacritical representations to proper Unicode characters
+         */
+        function formatLatinAccents(text) {
+            if (!text) return text;
+
+            const hasUnicodeAccents = /[āēīōūăĕĭŏŭĀĒĪŌŪĂĔĬŎŬ]/.test(text);
+            if (hasUnicodeAccents) {
+                return text;
+            }
+
+            const macronMap = {
+                'a': 'ā', 'A': 'Ā',
+                'e': 'ē', 'E': 'Ē',
+                'i': 'ī', 'I': 'Ī',
+                'o': 'ō', 'O': 'Ō',
+                'u': 'ū', 'U': 'Ū'
+            };
+
+            const breveMap = {
+                'a': 'ă', 'A': 'Ă',
+                'e': 'ĕ', 'E': 'Ĕ',
+                'i': 'ĭ', 'I': 'Ĭ',
+                'o': 'ŏ', 'O': 'Ŏ',
+                'u': 'ŭ', 'U': 'Ŭ'
+            };
+
+            let formattedText = text;
+
+            formattedText = formattedText.replace(/([aeiouAEIOU])̄/g, (match, vowel) => macronMap[vowel] || match);
+            formattedText = formattedText.replace(/([aeiouAEIOU])_/g, (match, vowel) => macronMap[vowel] || match);
+            formattedText = formattedText.replace(/([aeiouAEIOU])\^/g, (match, vowel) => macronMap[vowel] || match);
+            formattedText = formattedText.replace(/([aeiouAEIOU])`/g, (match, vowel) => macronMap[vowel] || match);
+            formattedText = formattedText.replace(/([aeiouAEIOU])̆/g, (match, vowel) => breveMap[vowel] || match);
+            formattedText = formattedText.replace(/([aeiouAEIOU])´/g, (match, vowel) => macronMap[vowel] || match);
+
+            return formattedText;
+        }
+
+        /**
+         * Shuffles an array in place (Fisher-Yates algorithm).
+         */
+        function shuffle(array) {
+             for (let i = array.length - 1; i > 0; i--) {
+                 const j = Math.floor(Math.random() * (i + 1));
+                 [array[i], array[j]] = [array[j], array[i]];
+             }
+         }
+
+        /**
+         * Saves the current deck order as the original reference order.
+         */
+        function saveOriginalOrder() {
+            originalDeck = currentDeck.map(card => ({...card}));
+        }
+
+        /**
+         * Toggles shuffle on/off and updates the button state.
+         * ON  → shuffles randomly and resets to first card.
+         * OFF → restores the original input order.
+         */
+        function toggleShuffle() {
+            if (currentDeck.length <= 1) return;
+            shuffleEnabled = !shuffleEnabled;
+            if (shuffleEnabled) {
+                shuffle(currentDeck);
+            } else {
+                currentDeck = originalDeck.map(card => ({...card}));
+            }
+            currentCardIndex = 0;
+            updateShuffleButton();
+            renderCard();
+        }
+
+        function updateShuffleButton() {
+            const btn = document.getElementById('shuffle-btn');
+            if (!btn) return;
+            if (shuffleEnabled) {
+                btn.classList.remove('bg-amber-500/85', 'hover:bg-amber-500');
+                btn.classList.add('bg-emerald-500', 'hover:bg-emerald-600');
+                btn.title = 'Shuffle ON — click to turn OFF (S)';
+            } else {
+                btn.classList.remove('bg-emerald-500', 'hover:bg-emerald-600');
+                btn.classList.add('bg-amber-500/85', 'hover:bg-amber-500');
+                btn.title = 'Shuffle OFF — click to shuffle (S)';
+            }
+        }
+
+        window.shuffleDeckAndRender = toggleShuffle;
+
+        /**
+         * Shuffles the deck unconditionally (used by the S key).
+         */
+        function forceShuffle() {
+            if (currentDeck.length <= 1) return;
+            shuffle(currentDeck);
+            shuffleEnabled = true;
+            currentCardIndex = 0;
+            updateShuffleButton();
+            renderCard();
+        }
+
+
+        // --- Dark Mode Logic ---
+
+        function applyTheme(enable) {
+            const htmlEl = document.documentElement;
+            const sunIcon = document.getElementById('sun-icon');
+            const moonIcon = document.getElementById('moon-icon');
+
+            if (enable) {
+                htmlEl.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                sunIcon.style.display = 'block';
+                moonIcon.style.display = 'none';
+            } else {
+                htmlEl.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block';
+            }
+        }
+
+        window.toggleTheme = function() {
+            const isDarkMode = document.documentElement.classList.contains('dark');
+            applyTheme(!isDarkMode);
+        }
+
+        // --- Fullscreen Logic ---
+
+        window.toggleFullscreen = function() {
+            const container = document.getElementById('flashcard-container');
+
+            try {
+                let promiseResult;
+                if (!document.fullscreenElement) {
+                    if (container.requestFullscreen) {
+                        promiseResult = container.requestFullscreen();
+                    } else if (container.webkitRequestFullscreen) { /* Safari */
+                        promiseResult = container.webkitRequestFullscreen();
+                    } else if (container.msRequestFullscreen) { /* IE11 */
+                        promiseResult = container.msRequestFullscreen();
+                    }
+                } else {
+                    if (document.exitFullscreen) {
+                        promiseResult = document.exitFullscreen();
+                    } else if (document.webkitExitFullscreen) { /* Safari */
+                        promiseResult = document.webkitExitFullscreen();
+                    } else if (document.msExitFullscreen) { /* IE11 */
+                        promiseResult = document.msExitFullscreen();
+                    }
+                }
+
+                if (promiseResult && typeof promiseResult.catch === 'function') {
+                    promiseResult.catch(e => {
+                        console.warn("Fullscreen operation failed due to browser/permission policy:", e.message);
+                    });
+                }
+            } catch (e) {
+                console.warn("Fullscreen failed (sync error): This is often due to security restrictions in the embedded environment (iframe). The error was:", e.message);
+            }
+        }
+
+
+        // --- Deck Serialization and Compression ---
+
+        /**
+         * V2 encoder: serializes the deck to a compact plain-text format then
+         * compresses it with LZ-String into a URL-safe string.
+         *
+         * Plain-text format (delimiters \x1F unit / \x1E record):
+         *   title \x1E q \x1F def \x1F ex \x1E q \x1F def \x1F ex ...
+         * Empty examples serialize to an empty field (zero overhead),
+         * and the LZ dictionary compresses repeated words across cards.
+         */
+        function encodeDeckV2(title, cards) {
+            const RS = '\x1E', US = '\x1F';
+            const parts = [title || ''];
+            for (const card of cards) {
+                const ex = (card.example && card.example !== '(Example text not provided)') ? card.example : '';
+                parts.push([card.question || '', card.definition || '', ex].join(US));
+            }
+            return LZString.compressToEncodedURIComponent(parts.join(RS));
+        }
+
+        /**
+         * V2 decoder: inverse of encodeDeckV2.
+         */
+        function decodeDeckV2(encoded) {
+            try {
+                const raw = LZString.decompressFromEncodedURIComponent(encoded);
+                if (!raw) return null;
+                const RS = '\x1E', US = '\x1F';
+                const records = raw.split(RS);
+                const title = records.shift() || 'My Custom Deck';
+                const cards = records.map(rec => {
+                    const [question = '', definition = '', example = ''] = rec.split(US);
+                    return { question, definition, example };
+                }).filter(c => c.question && c.definition);
+                if (cards.length === 0) return null;
+                return { title, cards };
+            } catch (e) {
+                console.error('V2 decode failed:', e);
+                return null;
+            }
+        }
+
+        /**
+         * Legacy (v1) compressor kept for reference/compatibility tooling.
+         * Compact JSON structure, URI-encoded, then Base64.
+         */
+        function compressDeckData(title, cards) {
+            try {
+                if (!title || !cards || !Array.isArray(cards)) {
+                    throw new Error('Invalid input data for compression');
+                }
+                const deckData = {
+                    t: title,
+                    c: cards.map(card => {
+                        if (!card || typeof card.question === 'undefined' || typeof card.definition === 'undefined') {
+                            throw new Error('Invalid card structure');
+                        }
+                        return [
+                            card.question || '',
+                            card.definition || '',
+                            card.example || ''
+                        ];
+                    })
+                };
+                const jsonString = JSON.stringify(deckData);
+                if (jsonString.length > 50000) {
+                    throw new Error('Deck data is too large for URL compression');
+                }
+                const uriEncoded = encodeURIComponent(jsonString);
+                const compressed = btoa(uriEncoded);
+                return compressed;
+            } catch (error) {
+                console.error('Compression failed:', error);
+                return null;
+            }
+        }
+
+        /**
+         * Legacy (v1) decompressor — keeps old `?data=` links working.
+         */
+        function decompressDeckData(compressedData) {
+            try {
+                const uriEncoded = atob(compressedData);
+                const jsonString = decodeURIComponent(uriEncoded);
+                const deckData = JSON.parse(jsonString);
+                const result = {
+                    title: deckData.t,
+                    cards: deckData.c.map(card => ({
+                        question: card[0],
+                        definition: card[1],
+                        example: card[2]
+                    }))
+                };
+                return result;
+            } catch (error) {
+                console.error('Decompression failed:', error);
+                return null;
+            }
+        }
+
+
+        /**
+         * Parses URL parameters to load a deck.
+         * Supports, in priority order:
+         *   1. `?d=`     — v2 LZ-String compressed format (new links)
+         *   2. `?data=`  — v1 Base64-encoded JSON (legacy links keep working)
+         *   3. `?deck=`  — localStorage key (legacy)
+         *   4. `?cards=` / `?title=` — raw legacy format
+         */
+        function parseUrlDeck() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const v2Data = urlParams.get('d');
+            const compressedData = urlParams.get('data');
+            const deckKey = urlParams.get('deck');
+            const cardString = urlParams.get('cards');
+            const titleString = urlParams.get('title');
+            const shuffleParam = urlParams.get('shuffle');
+
+            // V2 compressed data system
+            if (v2Data) {
+                const deckData = decodeDeckV2(v2Data);
+                if (deckData) {
+                    return { title: deckData.title, cards: deckData.cards, error: null, shuffle: shuffleParam === '1' };
+                }
+                return {
+                    title: 'Decompression Error',
+                    cards: [],
+                    error: 'Failed to decompress the flashcard data. The link may be corrupted or truncated.',
+                    shuffle: false
+                };
+            }
+
+            // V1 compressed data system (backward compatible)
+            if (compressedData) {
+                const deckData = decompressDeckData(compressedData);
+                if (deckData) {
+                    return {
+                        title: deckData.title,
+                        cards: deckData.cards,
+                        error: null,
+                        shuffle: shuffleParam === '1'
+                    };
+                } else {
+                    return {
+                        title: 'Decompression Error',
+                        cards: [],
+                        error: 'Failed to decompress the flashcard data. The link may be corrupted.',
+                        shuffle: false
+                    };
+                }
+            }
+
+            // Legacy localStorage-based system (for backward compatibility)
+            if (deckKey) {
+                try {
+                    const storedData = localStorage.getItem(deckKey);
+                    if (storedData) {
+                        const deckData = JSON.parse(storedData);
+                        return {
+                            title: deckData.title,
+                            cards: deckData.cards,
+                            error: null,
+                            shuffle: shuffleParam === '1'
+                        };
+                    } else {
+                        return {
+                            title: 'Deck Not Found',
+                            cards: [],
+                            error: 'The requested deck could not be found. It may have been deleted or the link is invalid.',
+                            shuffle: false
+                        };
+                    }
+                } catch (error) {
+                    return {
+                        title: 'Deck Load Error',
+                        cards: [],
+                        error: 'Failed to load the deck from storage.',
+                        shuffle: false
+                    };
+                }
+            }
+
+            // Legacy URL-based system (for backward compatibility)
+            if (!cardString && !titleString) return null;
+
+            const result = {
+                title: 'Custom URL Flashcards',
+                cards: [],
+                error: null,
+                shuffle: shuffleParam === '1'
+            };
+
+            if (titleString) {
+                result.title = decodeURIComponent(titleString).trim() || "Custom URL Flashcards";
+            }
+
+            if (cardString) {
+                try {
+                    const decodedString = decodeURIComponent(cardString);
+
+                    const parsedCards = decodedString.split(';').map(cardEntry => {
+                        let [mainPart, examplePart = ""] = cardEntry.split('|').map(s => s.trim());
+                        const parts = mainPart.split(':');
+
+                        if (parts.length >= 2) {
+                            const question = parts[0].trim();
+                            const definition = parts.slice(1).join(':').trim();
+                            const example = examplePart || "(Example text not provided)";
+
+                            if (question && definition) {
+                                return {
+                                    question: formatLatinAccents(question),
+                                    definition: formatLatinAccents(definition),
+                                    example: formatLatinAccents(example)
+                                };
+                            }
+                        }
+                        return null;
+                    }).filter(card => card !== null && card.question && card.definition);
+
+                    if (parsedCards.length > 0) {
+                        result.cards = parsedCards;
+                    } else {
+                        result.error = "Malformed or empty 'Term:Definition' pairs in the URL.";
+                    }
+
+                } catch (error) {
+                    result.error = "Error decoding 'cards' parameter due to bad encoding.";
+                    console.error("URL decoding error:", error);
+                }
+            } else {
+                result.error = "Missing 'cards' parameter in the URL.";
+            }
+
+            return result;
+        }
+
+        /**
+         * Loads the deck from URL or falls back to default cards and handles errors.
+         */
+        function initializeDeck() {
+            const urlResult = parseUrlDeck();
+
+            if (urlResult && urlResult.cards.length > 0) {
+                currentDeck = urlResult.cards;
+                deckTitleEl.textContent = urlResult.title;
+                document.title = urlResult.title;
+                deckSubtitleEl.textContent = `${currentDeck.length} card${currentDeck.length === 1 ? '' : 's'}`;
+            } else if (urlResult && urlResult.error) {
+                currentDeck = [{ question: "Error Loading Deck", definition: urlResult.error, example: "Use the Generator below to create a valid link." }];
+                deckTitleEl.textContent = urlResult.title;
+                document.title = urlResult.title;
+                deckSubtitleEl.textContent = '';
+            } else {
+                const defaultTitle = "Create Your First Deck";
+                currentDeck = [{ question: "Welcome to your Flashcards!", definition: "Use the Generator below to create a shareable deck.", example: "Or load a deck using a URL parameter." }];
+                deckTitleEl.textContent = defaultTitle;
+                document.title = defaultTitle;
+                deckSubtitleEl.textContent = '';
+            }
+
+            saveOriginalOrder();
+            shuffleEnabled = urlResult && urlResult.shuffle ? true : false;
+            if (shuffleEnabled && currentDeck.length > 1) {
+                shuffle(currentDeck);
+            }
+            currentCardIndex = 0;
+            renderCard();
+        }
+
+        // --- Flashcard UI Logic ---
+
+        /**
+         * Renders the current card's content and updates navigation state and progress.
+         */
+        function renderCard() {
+            if (currentDeck.length === 0) return;
+
+            const card = currentDeck[currentCardIndex];
+
+            cardFrontText.innerHTML = formatLatinAccents(card.question);
+            cardBackDefEl.innerHTML = formatLatinAccents(card.definition);
+            cardBackExEl.innerHTML = formatLatinAccents(card.example || "(No example text provided)");
+
+            cardCounterEl.textContent = `${currentCardIndex + 1} / ${currentDeck.length}`;
+
+            const progress = (currentCardIndex + 1) / currentDeck.length * 100;
+            progressBarEl.style.width = `${progress.toFixed(2)}%`;
+
+            prevBtn.disabled = currentCardIndex === 0;
+            nextBtn.disabled = currentCardIndex === currentDeck.length - 1;
+
+            if (isFlipped) {
+                flashcardContainer.classList.remove('flipped');
+                isFlipped = false;
+            }
+
+            // Replay the card entrance animation
+            cardInnerEl.classList.remove('card-anim');
+            void cardInnerEl.offsetWidth;
+            cardInnerEl.classList.add('card-anim');
+        }
+
+        window.flipCard = function() {
+            if (currentDeck.length === 0) return;
+            isFlipped = !isFlipped;
+            flashcardContainer.classList.toggle('flipped');
+        }
+
+        window.nextCard = function() {
+            if (currentCardIndex < currentDeck.length - 1) {
+                currentCardIndex++;
+                renderCard();
+            }
+        }
+
+        window.prevCard = function() {
+            if (currentCardIndex > 0) {
+                currentCardIndex--;
+                renderCard();
+            }
+        }
+
+        /**
+         * Switches the structure of all flashcards from term:definition to definition:term.
+         */
+        window.switchTermDefinition = function() {
+            if (currentDeck.length === 0) return;
+
+            currentDeck.forEach(card => {
+                const temp = card.question;
+                card.question = card.definition;
+                card.definition = temp;
+            });
+
+            originalDeck.forEach(card => {
+                const temp = card.question;
+                card.question = card.definition;
+                card.definition = temp;
+            });
+
+            renderCard();
+        }
+
+        // --- URL Generator Functions ---
+
+        /**
+         * Parses generator textarea lines into card objects.
+         */
+        function parseCardInput(cardInput) {
+            const rawLines = cardInput.split('\n')
+                                     .map(line => line.trim())
+                                     .filter(line => line.includes(':'));
+
+            return rawLines.map(line => {
+                let [mainPart, examplePart = ""] = line.split('|').map(s => s.trim());
+                const parts = mainPart.split(':');
+
+                if (parts.length >= 2) {
+                    const question = parts[0].trim();
+                    const definition = parts.slice(1).join(':').trim();
+                    const example = examplePart || "";
+
+                    if (question && definition) {
+                        return {
+                            question: formatLatinAccents(question),
+                            definition: formatLatinAccents(definition),
+                            example: formatLatinAccents(example)
+                        };
+                    }
+                }
+                return null;
+            }).filter(c => c !== null);
+        }
+
+        /**
+         * Updates the URL capacity meter under the generated link.
+         */
+        function updateCapacityMeter(urlLength) {
+            const bar = document.getElementById('url-capacity-bar');
+            const lengthLabel = document.getElementById('url-length-label');
+            const capacityLabel = document.getElementById('url-capacity-label');
+
+            const pct = Math.min(100, (urlLength / URL_SAFE_LIMIT) * 100);
+            bar.style.width = `${pct}%`;
+            bar.className = 'h-full transition-all duration-300 ' +
+                (urlLength > URL_SAFE_LIMIT ? 'bg-red-500' : urlLength > URL_SAFE_LIMIT * 0.75 ? 'bg-amber-500' : 'bg-emerald-500');
+
+            lengthLabel.textContent = `URL length: ${urlLength.toLocaleString()} chars`;
+            capacityLabel.textContent = urlLength > URL_SAFE_LIMIT
+                ? 'Long URL — may not paste cleanly in some apps'
+                : `${Math.round(100 - pct)}% capacity remaining`;
+        }
+
+        /**
+         * Generates the shareable URL based on the text inputs using the
+         * v2 LZ-String format (substantially shorter than the v1 Base64 format,
+         * so far more cards fit before hitting browser URL limits).
+         */
+        window.generateLink = function() {
+            const titleInput = document.getElementById('title-input').value.trim();
+            const cardInput = document.getElementById('card-input').value.trim();
+
+            const processedCards = parseCardInput(cardInput);
+
+            if (processedCards.length === 0) {
+                linkOutputEl.value = "Error: Please enter valid Term:Definition pairs (one per line).";
+                linkOutputContainer.classList.remove('hidden');
+                return;
+            }
+
+            const title = titleInput || "My Custom Deck";
+            const encoded = encodeDeckV2(title, processedCards);
+
+            if (!encoded) {
+                linkOutputEl.value = "Error: Failed to compress deck data.";
+                linkOutputContainer.classList.remove('hidden');
+                return;
+            }
+
+            const newUrl = `${window.location.protocol}//${window.location.host}${window.location.pathname}?d=${encoded}&shuffle=0`;
+            const urlLength = newUrl.length;
+
+            if (urlLength > URL_HARD_LIMIT) {
+                linkOutputEl.value = `Error: Deck is too large even after compression (${urlLength.toLocaleString()} chars). Try splitting it into multiple decks or use Export Deck.`;
+                linkOutputContainer.classList.remove('hidden');
+                updateCapacityMeter(urlLength);
+                return;
+            }
+
+            linkOutputEl.value = newUrl;
+            linkOutputContainer.classList.remove('hidden');
+            updateCapacityMeter(urlLength);
+
+            // Show compression statistics vs the old v1 encoding
+            const legacyEncoded = compressDeckData(title, processedCards.map(c => ({
+                question: c.question, definition: c.definition, example: c.example || '(Example text not provided)'
+            })));
+            const copyMessage = document.getElementById('copy-message');
+            if (legacyEncoded) {
+                const savings = Math.round((1 - encoded.length / legacyEncoded.length) * 100);
+                copyMessage.textContent = `Link generated! ${processedCards.length} cards, ${savings}% shorter than the previous format.`;
+            } else {
+                copyMessage.textContent = `Link generated! ${processedCards.length} cards.`;
+            }
+            copyMessage.classList.remove('opacity-0');
+            setTimeout(() => copyMessage.classList.add('opacity-0'), 5000);
+
+            // Reload the new deck into the app preview
+            currentDeck = processedCards.map(c => ({ ...c }));
+            deckTitleEl.textContent = title;
+            document.title = title;
+            deckSubtitleEl.textContent = `${currentDeck.length} card${currentDeck.length === 1 ? '' : 's'}`;
+            saveOriginalOrder();
+            shuffleEnabled = false;
+            updateShuffleButton();
+            currentCardIndex = 0;
+            renderCard();
+        }
+
+        /**
+         * Live stats under the generator textarea.
+         */
+        function updateInputStats() {
+            const statsEl = document.getElementById('input-stats');
+            const cardInput = document.getElementById('card-input').value.trim();
+            if (!cardInput) {
+                statsEl.textContent = '';
+                return;
+            }
+            const cards = parseCardInput(cardInput);
+            statsEl.textContent = `${cards.length} valid card${cards.length === 1 ? '' : 's'} detected`;
+        }
+
+        /**
+         * Copies the generated link to the clipboard.
+         */
+        window.copyLink = function() {
+            linkOutputEl.select();
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    copyMessageEl.textContent = 'Link copied!';
+                    copyMessageEl.classList.remove('opacity-0');
+                    setTimeout(() => copyMessageEl.classList.add('opacity-0'), 2000);
+                }
+            } catch (err) {
+                console.error('Copy failed:', err);
+                linkOutputEl.setSelectionRange(0, 99999);
+            }
+        }
+
+        /**
+         * Exports the current deck data as JSON for backup purposes
+         */
+        window.exportDeck = function() {
+            if (currentDeck.length === 0) {
+                alert('No deck to export!');
+                return;
+            }
+
+            const deckData = {
+                title: deckTitleEl.textContent,
+                cards: currentDeck,
+                timestamp: Date.now(),
+                version: '2.0'
+            };
+
+            const dataStr = JSON.stringify(deckData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `flashcards_${deckData.title.replace(/[^a-zA-Z0-9]/g, '_')}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        /**
+         * Imports deck data from a JSON file
+         */
+        window.importDeck = function() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+
+            input.onchange = function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const deckData = JSON.parse(e.target.result);
+
+                        if (!deckData.title || !deckData.cards || !Array.isArray(deckData.cards)) {
+                            alert('Invalid deck file format!');
+                            return;
+                        }
+
+                        currentDeck = deckData.cards;
+                        deckTitleEl.textContent = deckData.title;
+                        document.title = deckData.title;
+                        deckSubtitleEl.textContent = `${currentDeck.length} card${currentDeck.length === 1 ? '' : 's'}`;
+
+                        saveOriginalOrder();
+                        shuffleEnabled = false;
+                        updateShuffleButton();
+                        currentCardIndex = 0;
+                        renderCard();
+
+                        alert(`Successfully imported "${deckData.title}" with ${deckData.cards.length} cards!`);
+                    } catch (error) {
+                        alert('Error reading deck file: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            };
+
+            input.click();
+        }
+
+        /**
+         * Clears all stored flashcard decks from localStorage
+         */
+        window.clearAllStoredDecks = function() {
+            if (confirm('This will delete all stored flashcard decks from your browser. This action cannot be undone. Continue?')) {
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith('flashcard_deck_')) {
+                        keysToRemove.push(key);
+                    }
+                }
+
+                keysToRemove.forEach(key => localStorage.removeItem(key));
+                alert(`Cleared ${keysToRemove.length} stored decks.`);
+            }
+        }
+
+
+        // --- Initialization on Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Initialize Theme
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const storedTheme = localStorage.getItem('theme');
+
+            if (storedTheme === 'dark' || (!storedTheme && prefersDark)) {
+                applyTheme(true);
+            } else {
+                applyTheme(false);
+            }
+
+            // 2. Initialize Deck
+            initializeDeck();
+            updateShuffleButton();
+
+            // 3. Attach event listeners
+            document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+            document.getElementById('card-input').addEventListener('input', updateInputStats);
+
+            // 4. Keyboard shortcuts for quick studying
+            document.addEventListener('keydown', (e) => {
+                if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
+                    return;
+                }
+
+                if (e.key === 'ArrowRight') nextCard();
+                else if (e.key === 'ArrowLeft') prevCard();
+                else if (e.key === 's' || e.key === 'S') forceShuffle();
+                else if (e.key === ' ' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    flipCard();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
